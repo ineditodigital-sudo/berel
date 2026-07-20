@@ -19,13 +19,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Berel México | Pinta con confianza",
     description: "Productos originales, asesoría especializada y compra segura.",
-    images: [{ url: "/hero-modern-berel.png", width: 1680, height: 939 }],
+    images: [{ url: "/hero-modern-berel.webp", width: 1600, height: 894 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Berel México | Pinta con confianza",
     description: "Productos originales, asesoría especializada y compra segura.",
-    images: ["/hero-modern-berel.png"],
+    images: ["/hero-modern-berel.webp"],
   },
   icons: {
     icon: "/favicon.svg",
