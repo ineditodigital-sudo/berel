@@ -13,18 +13,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Colora | Pinta mejor",
-  description: "Encuentra la pintura, el color y la cantidad ideal para transformar tu espacio.",
+  title: "Berel México | Pinturas, impermeabilizantes y recubrimientos",
+  description: "Compra pinturas, impermeabilizantes, barnices y accesorios Berel con asesoría especializada.",
   openGraph: {
-    title: "Colora | Pinta mejor",
-    description: "Tu espacio merece un color extraordinario.",
-    images: [{ url: "/og.png", width: 1680, height: 939 }],
+    title: "Berel México | Pinta con confianza",
+    description: "Productos originales, asesoría especializada y compra segura.",
+    images: [{ url: "/og-berel.png", width: 1680, height: 939 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Colora | Pinta mejor",
-    description: "Tu espacio merece un color extraordinario.",
-    images: ["/og.png"],
+    title: "Berel México | Pinta con confianza",
+    description: "Productos originales, asesoría especializada y compra segura.",
+    images: ["/og-berel.png"],
   },
   icons: {
     icon: "/favicon.svg",
