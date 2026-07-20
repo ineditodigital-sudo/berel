@@ -42,7 +42,7 @@ export default function Home() {
     <section className="trustbar"><span><Truck/> Envío gratis <small>en compras desde $999</small></span><span><Headphones/> Asesoría en línea <small>para elegir mejor</small></span><span><ShieldCheck/> Compra 100% segura <small>pago protegido</small></span></section>
 
     <section id="inicio" className="hero-berel">
-      <img src="/berel/berel-logo.png" alt="Promoción mundialista Berel: 20% de descuento en toda la tienda"/>
+      <img src="/hero-modern-berel.png" alt="Color para cada proyecto: pinturas y soluciones Berel"/>
       <div className="hero-panel"><p>TIENDA OFICIAL BEREL MÉXICO</p><h1>Todo para pintar,<br/>proteger y renovar.</h1><span>Productos originales, asesoría especializada y entrega directa.</span><div><a className="red-button" href="#productos">Comprar ahora <ArrowRight/></a><a className="white-button" href="#asesoria">Ayúdame a elegir</a></div></div>
     </section>
 

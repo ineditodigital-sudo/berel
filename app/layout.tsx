@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./modern.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,13 +19,13 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Berel México | Pinta con confianza",
     description: "Productos originales, asesoría especializada y compra segura.",
-    images: [{ url: "/og-berel.png", width: 1680, height: 939 }],
+    images: [{ url: "/hero-modern-berel.png", width: 1680, height: 939 }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Berel México | Pinta con confianza",
     description: "Productos originales, asesoría especializada y compra segura.",
-    images: ["/og-berel.png"],
+    images: ["/hero-modern-berel.png"],
   },
   icons: {
     icon: "/favicon.svg",
