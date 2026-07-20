@@ -129,9 +129,11 @@ export default function Home() {
     "Fácil de limpiar",
   ]);
   const [hero, setHero] = useState(0);
-  const [heroPaused, setHeroPaused] = useState(false);
+  const [heroManuallyPaused, setHeroManuallyPaused] = useState(false);
+  const [heroInteractionPaused, setHeroInteractionPaused] = useState(false);
   const [splash, setSplash] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
+  const heroPaused = heroManuallyPaused || heroInteractionPaused;
   const visible = useMemo(
     () =>
       products.filter(
@@ -175,12 +177,16 @@ export default function Home() {
           (entry) =>
             entry.isIntersecting && entry.target.classList.add("is-visible"),
         ),
-      { threshold: 0.12 },
+      { threshold: 0.06, rootMargin: "0px 0px 18% 0px" },
     );
-    document.querySelectorAll("section, footer").forEach((section) => {
-      section.classList.add("reveal");
-      observer.observe(section);
-    });
+    document
+      .querySelectorAll(
+        "#categorias, #asesoria, #productos, .featured-product, .service-grid, footer",
+      )
+      .forEach((section) => {
+        section.classList.add("reveal");
+        observer.observe(section);
+      });
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
@@ -255,10 +261,10 @@ export default function Home() {
           className={`hero-carousel theme-${heroSlides[hero].theme}`}
           aria-roledescription="carrusel"
           aria-label="Campañas destacadas"
-          onMouseEnter={() => setHeroPaused(true)}
-          onMouseLeave={() => setHeroPaused(false)}
-          onFocusCapture={() => setHeroPaused(true)}
-          onBlurCapture={() => setHeroPaused(false)}
+          onMouseEnter={() => setHeroInteractionPaused(true)}
+          onMouseLeave={() => setHeroInteractionPaused(false)}
+          onFocusCapture={() => setHeroInteractionPaused(true)}
+          onBlurCapture={() => setHeroInteractionPaused(false)}
         >
           <div
             className="hero-track"
@@ -323,14 +329,15 @@ export default function Home() {
             ))}
             <button
               className="hero-pause"
-              onClick={() => setHeroPaused((value) => !value)}
+              onClick={() => setHeroManuallyPaused((value) => !value)}
+              aria-pressed={heroManuallyPaused}
               aria-label={
-                heroPaused
+                heroManuallyPaused
                   ? "Reanudar rotación del carrusel"
                   : "Pausar rotación del carrusel"
               }
             >
-              {heroPaused ? <Play /> : <Pause />}
+              {heroManuallyPaused ? <Play /> : <Pause />}
             </button>
           </div>
         </section>
