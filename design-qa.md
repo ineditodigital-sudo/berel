@@ -1,46 +1,66 @@
-# Design QA — Berel local
+# Design QA — Berel mobile first
 
-## Alcance
+## Evidencia
 
-- Referencia de escritorio: `outputs/auditoria-berel/01-inicio-escritorio.png`
-- Referencia móvil: `outputs/auditoria-berel/06-inicio-movil.png`
-- Implementación de escritorio: `outputs/qa-local/inicio-desktop-final.png`
-- Implementación móvil: `outputs/qa-local/inicio-mobile-final.png`
-- Estado adicional del carrusel: `outputs/qa-local/hero-slide-2-desktop-final.png`
-- Estados interactivos: `outputs/qa-local/menu-mobile-final.png` y `outputs/qa-local/buscador-mobile-final.png`
-- Comparaciones completas: `outputs/qa-local/comparacion-desktop-final.png` y `outputs/qa-local/comparacion-mobile-final.png`
+- Fuente visual: `outputs/qa-local/inicio-mobile-final.png`
+- Implementación principal: `outputs/qa-local/mobile-first-home-390-final.png`
+- Comparación de vista completa: `outputs/qa-local/comparacion-mobile-first-final.png`
+- Menú abierto: `outputs/qa-local/mobile-first-menu-390-v2.png`
+- Búsqueda activa: `outputs/qa-local/mobile-first-search-390.png`
+- Catálogo: `outputs/qa-local/mobile-first-catalog-390.png`
+- Ficha de producto: `outputs/qa-local/mobile-first-product-390.png`
+- Compra en ficha: `outputs/qa-local/mobile-first-product-purchase-390-v2.png`
+- Anchos complementarios: `outputs/qa-local/mobile-first-home-375.png` y `outputs/qa-local/mobile-first-home-768-v2.png`
 
 ## Viewports y estados
 
-- Escritorio: 1440 × 900, inicio, campaña 1.
-- Escritorio: 1440 × 900, campaña 2 seleccionada manualmente.
-- Móvil: 390 × 844, inicio, campaña 1.
-- Móvil: 390 × 844, menú abierto y búsqueda con el término `pisos`.
+- 390 × 844: inicio, menú abierto, búsqueda con `pisos`, catálogo y producto.
+- 375 × 812: inicio.
+- 768 × 1024: transición a tableta.
+- Sin desbordamiento horizontal: `scrollWidth` coincide con `clientWidth` en 375, 390 y 768.
 
-## Hallazgos y correcciones
+## Comparación visual
 
-- P1 corregido: el encabezado variaba entre inicio, catálogo y producto; ahora usa un componente compartido.
-- P1 corregido: la primera campaña recortaba el mensaje en móvil; ahora conserva el producto como fondo y presenta contenido HTML legible con acciones completas.
-- P1 corregido: el botón secundario de la segunda campaña perdía contraste; ahora mantiene texto oscuro sobre fondo blanco.
-- P2 corregido: la búsqueda móvil no estaba disponible en el primer viewport; ahora aparece debajo de la fila principal y devuelve sugerencias reales.
-- P2 corregido: el carrusel no ofrecía control de pausa; ahora tiene pausa/reanudación, se detiene con hover/foco y respeta `prefers-reduced-motion`.
-- P2 corregido: faltaban estados consistentes de foco; ahora los controles principales tienen foco visible.
-- P3 aceptado: en móvil el panel de contenido cubre parte del arte del hero. La prioridad deliberada es legibilidad y conversión; el producto sigue siendo identificable.
+La comparación de vista completa confirma que el contenido prioritario cabe mejor en el primer viewport: la búsqueda, el beneficio principal, el mensaje completo del hero, sus dos acciones y el inicio de categorías permanecen visibles. El arte original, la paleta Berel y la jerarquía editorial se conservan.
+
+Se usaron vistas enfocadas porque los detalles críticos —menú, resultados de búsqueda, grilla de catálogo y controles de compra— no podían juzgarse con precisión en la comparación general.
+
+## Superficies de fidelidad
+
+- Tipografía: Geist se mantiene; cuerpo e inputs móviles usan 16 px o más, encabezados tienen interlineado compacto y no hay truncamientos.
+- Espaciado y ritmo: gutter base de 16 px, radios de 18–20 px, separación táctil mínima de 8 px y objetivos de 44 px.
+- Colores y tokens: se conservan rojo, negro, blanco, azul y amarillo Berel con contraste legible.
+- Imágenes: se reutilizan los artes y productos reales del proyecto; el crop móvil del primer hero prioriza envases y elimina texto fragmentado.
+- Copy: se conserva el contenido aprobado y las etiquetas de comercio; el catálogo respeta mayúsculas naturales en español.
+
+## Hallazgos
+
+- No quedan hallazgos P0, P1 o P2 abiertos.
+- [P3] La navegación horizontal de tableta muestra parcialmente el siguiente enlace como indicación de desplazamiento. Es deliberado y no bloquea interacción.
+- [P3] El panel del primer hero cubre parte del envase principal. Se acepta para priorizar legibilidad y conversión en una pantalla estrecha.
 
 ## Historial de comparación
 
-1. La primera comparación detectó recorte de contenido en móvil y disparidad entre encabezados.
-2. La segunda iteración unificó navegación, añadió el panel móvil, búsqueda y controles accesibles del carrusel.
-3. La revisión enfocada de la campaña 2 detectó el contraste del CTA secundario y se corrigió.
-4. La comparación final no presenta hallazgos P0, P1 o P2 abiertos.
+1. [P1] El menú móvil conservaba una altura de escritorio y solo mostraba el primer enlace. Se convirtió en una hoja de navegación de altura completa; la evidencia posterior es `mobile-first-menu-390-v2.png`.
+2. [P1] El selector de cantidad heredaba el ancho de otro componente y se superponía al precio. Se acotó la regla al bloque destacado; la evidencia posterior es `mobile-first-product-purchase-390-v2.png`.
+3. [P2] A 768 px el encabezado usaba dos columnas y recortaba logo, acciones y navegación. Se añadió una transición específica de tableta; la evidencia posterior es `mobile-first-home-768-v2.png`.
+4. [P2] El crop inicial del hero dejaba fragmentos grandes del texto integrado en la imagen. Se desplazó el foco hacia los productos; la evidencia posterior es `mobile-first-home-390-final.png`.
 
-## Validación funcional
+## Interacciones y ejecución
 
-- Carrusel: selección manual y control de pausa disponibles.
-- Menú móvil: abre y cierra correctamente.
+- Menú: abre, bloquea el fondo, muestra todas las rutas y permite cerrarse.
 - Buscador: `pisos` muestra `Pintura para Pisos Serie 3800`.
-- Consola: sin errores de aplicación durante la revisión; solo mensajes informativos de Vite y React en desarrollo.
+- Carrusel: controles anterior, siguiente, indicadores y pausa permanecen disponibles.
+- Consola: sin errores ni advertencias de ejecución en la captura final.
+- Compilación: completada correctamente.
 
-## Resultado
+## Checklist de implementación
 
-passed
+- [x] Header sticky y buscador de 48 px.
+- [x] Beneficios desplazables y visibles.
+- [x] Hero móvil legible sin recortes de UI.
+- [x] Categorías y catálogo en grilla táctil.
+- [x] Ficha de producto y controles de compra sin solapamientos.
+- [x] Menú, búsqueda, 375 px, 390 px y 768 px comprobados.
+
+final result: passed

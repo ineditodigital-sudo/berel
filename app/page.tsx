@@ -218,7 +218,7 @@ export default function Home() {
           <span />
         </div>
       )}
-      <main>
+      <main id="main-content">
         <div className="utility">
           <span>Envíos en CDMX y Edo. Méx.</span>
           <div>

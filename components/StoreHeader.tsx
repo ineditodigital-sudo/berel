@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-html-link-for-pages */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronDown,
@@ -51,6 +51,11 @@ export default function StoreHeader({
     [query],
   );
 
+  useEffect(() => {
+    document.body.classList.toggle("mobile-menu-open", open);
+    return () => document.body.classList.remove("mobile-menu-open");
+  }, [open]);
+
   const submit = (event: React.FormEvent) => {
     event.preventDefault();
     setSearchOpen(false);
@@ -60,6 +65,9 @@ export default function StoreHeader({
 
   return (
     <header className="store-header">
+      <a className="skip-link" href="#main-content">
+        Saltar al contenido
+      </a>
       <div className="header-main">
         <button
           className="mobile-button"
@@ -165,7 +173,11 @@ export default function StoreHeader({
         className={open ? "main-nav open" : "main-nav"}
         aria-label="Navegación principal"
       >
-        <a className="nav-all" href="/tienda/todos">
+        <a
+          className="nav-all"
+          href="/tienda/todos"
+          onClick={() => setOpen(false)}
+        >
           <Menu size={18} /> Todos los productos <ChevronDown size={15} />
         </a>
         {menuPages.map((name) => (
@@ -173,11 +185,14 @@ export default function StoreHeader({
             className={name === "Promociones" ? "sale" : ""}
             href={`/tienda/${slugify(name)}`}
             key={name}
+            onClick={() => setOpen(false)}
           >
             {name}
           </a>
         ))}
-        <a href="/#asesoria">Encuentra tu producto</a>
+        <a href="/#asesoria" onClick={() => setOpen(false)}>
+          Encuentra tu producto
+        </a>
       </nav>
     </header>
   );

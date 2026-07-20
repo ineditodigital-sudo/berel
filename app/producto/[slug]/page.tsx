@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
 import { use, useState } from "react";
 import { notFound } from "next/navigation";
@@ -24,7 +25,7 @@ export default function ProductPage({
   const p = products.find((item) => item.slug === slug);
   if (!p) return notFound();
   return (
-    <main>
+    <main id="main-content">
       <StoreHeader />
       <div className="breadcrumbs">
         <a href="/">Inicio</a> /{" "}
