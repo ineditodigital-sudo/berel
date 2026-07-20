@@ -11,10 +11,16 @@ const categories = [
 ];
 
 const products = [
-  { name: "Pintura para Pisos Serie 3800", category: "Base agua", image: "/berel/pisos.png", from: 1385, to: 6319, tag: "Alta resistencia", rating: 4.9 },
-  { name: "Sellador Anti-Salitre No. 530", category: "Selladores", image: "/berel/salitre.png", from: 195, to: 3165, tag: "Contra humedad", rating: 4.8 },
-  { name: "Berelex Pintura para Playa", category: "Exteriores", image: "/berel/playa.png", from: 835, to: 3559, tag: "Clima extremo", rating: 4.9 },
-  { name: "Pintura para Pizarrón Serie 4600", category: "Decorativos", image: "/berel/pizarron.png", from: 283.5, old: 375, tag: "Oferta", rating: 4.7 },
+  { slug:"pintura-pisos-3800", name: "Pintura para Pisos Serie 3800", category: "Base agua", image: "/berel/pisos.png", from: 1385, to: 6319, tag: "Alta resistencia", rating: 4.9 },
+  { slug:"sellador-anti-salitre-530", name: "Sellador Anti-Salitre No. 530", category: "Selladores", image: "/berel/salitre.png", from: 195, to: 3165, tag: "Contra humedad", rating: 4.8 },
+  { slug:"berelex-playa", name: "Berelex Pintura para Playa", category: "Exteriores", image: "/berel/playa.png", from: 835, to: 3559, tag: "Clima extremo", rating: 4.9 },
+  { slug:"pintura-pizarron-4600", name: "Pintura para Pizarrón Serie 4600", category: "Decorativos", image: "/berel/pizarron.png", from: 283.5, old: 375, tag: "Oferta", rating: 4.7 },
+];
+
+const heroSlides=[
+ {eyebrow:"TIENDA OFICIAL BEREL MÉXICO",title:"Todo para pintar, proteger y renovar.",copy:"Productos originales, asesoría especializada y entrega directa.",image:"/hero-modern-berel.webp",theme:"yellow"},
+ {eyebrow:"PROTECCIÓN TODO EL AÑO",title:"Que la lluvia no detenga tus proyectos.",copy:"Impermeabilizantes de alto desempeño para cuidar tu hogar.",image:"/berel/imper.webp",theme:"blue"},
+ {eyebrow:"COLOR PARA EXTERIORES",title:"Fachadas que resisten y se ven increíbles.",copy:"Recubrimientos diseñados para sol, humedad y ambientes exigentes.",image:"/berel/playa.png",theme:"red"}
 ];
 
 const money = (n:number) => n.toLocaleString("es-MX", { style:"currency", currency:"MXN", minimumFractionDigits:2 });
@@ -30,6 +36,8 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [toast, setToast] = useState("");
   const [finder, setFinder] = useState(["Muros y plafones", "Interior", "Fácil de limpiar"]);
+  const [hero,setHero]=useState(0);
+  const [splash,setSplash]=useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const visible = useMemo(() => products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) && (category === "Todos" || p.category.toLowerCase().includes(category.toLowerCase()))), [query, category]);
   const notify = useCallback((message:string) => { setToast(message); window.setTimeout(()=>setToast(""), 2200); }, []);
@@ -41,25 +49,23 @@ export default function Home() {
     document.querySelectorAll("section, footer").forEach(section => { section.classList.add("reveal"); observer.observe(section); });
     return () => observer.disconnect();
   }, []);
+  useEffect(()=>{const splashTimer=window.setTimeout(()=>setSplash(false),1500);const slider=window.setInterval(()=>setHero(v=>(v+1)%heroSlides.length),5500);return()=>{clearTimeout(splashTimer);clearInterval(slider)}},[]);
 
-  return <main>
+  return <>{splash&&<div className="brand-splash"><div className="splash-logo">berel<small>PINTA CON CONFIANZA</small></div><span/></div>}<main>
     <div className="utility"><span>Envíos en CDMX y Edo. Méx.</span><div><a href="#ayuda">Preguntas frecuentes</a><a href="#contacto">Contacto</a><a href="#cuenta">Facturación</a></div></div>
     <header>
       <div className="header-main">
         <button className="mobile-button" onClick={()=>setMobile(!mobile)} aria-label={mobile?"Cerrar menú":"Abrir menú"}>{mobile?<X/>:<Menu/>}</button>
         <a className="berel-logo" href="#inicio" aria-label="Berel México inicio"><span>berel</span><small>PINTA CON CONFIANZA</small></a>
-        <form className="searchbox" onSubmit={e=>e.preventDefault()}><Search size={19}/><input aria-label="Buscar productos" value={query} onChange={e=>setQuery(e.target.value)} placeholder="¿Qué producto estás buscando?"/><button>Buscar</button></form>
+        <form className="searchbox search-live" onSubmit={e=>{e.preventDefault();visible[0]?window.location.href=`/producto/${visible[0].slug}`:window.location.href=`/tienda/todos?q=${encodeURIComponent(query)}`}}><Search size={19}/><input aria-label="Buscar productos" value={query} onChange={e=>setQuery(e.target.value)} placeholder="¿Qué producto estás buscando?"/><button>Buscar</button>{query.length>1&&<div className="search-results">{visible.slice(0,4).map(p=><button type="button" key={p.slug} onClick={()=>window.location.href=`/producto/${p.slug}`}><img src={p.image} alt=""/><span><b>{p.name}</b><small>{p.category}</small></span></button>)}</div>}</form>
         <div className="head-actions"><a href="#cuenta"><CircleUserRound/><span><small>Bienvenido</small>Mi cuenta</span></a><button className="round-action" onClick={()=>notify(`${favorites.length} producto${favorites.length===1?"":"s"} en favoritos`)} aria-label="Favoritos"><Heart fill={favorites.length?"currentColor":"none"}/></button><button className="cart round-action" onClick={()=>setCartOpen(true)} aria-label={`Carrito con ${cart} productos`}><ShoppingCart/><b>{cart}</b></button></div>
       </div>
-      <nav className={mobile?"main-nav open":"main-nav"} aria-label="Navegación principal"><button><Menu size={18}/> Todos los productos <ChevronDown size={15}/></button><a href="#categorias">Pinturas</a><a href="#categorias">Impermeabilizantes</a><a href="#categorias">Esmaltes</a><a href="#categorias">Maderas</a><a href="#productos">Accesorios</a><a className="sale" href="#productos">Promociones</a><a href="#asesoria">Encuentra tu producto</a></nav>
+      <nav className={mobile?"main-nav open":"main-nav"} aria-label="Navegación principal"><a className="nav-all" href="/tienda/todos"><Menu size={18}/> Todos los productos <ChevronDown size={15}/></a><a href="/tienda/pinturas">Pinturas</a><a href="/tienda/impermeabilizantes">Impermeabilizantes</a><a href="/tienda/esmaltes">Esmaltes</a><a href="/tienda/maderas">Maderas</a><a href="/tienda/accesorios">Accesorios</a><a className="sale" href="/tienda/promociones">Promociones</a><a href="#asesoria">Encuentra tu producto</a></nav>
     </header>
 
     <section className="trustbar"><span><Truck/> Envío gratis <small>en compras desde $999</small></span><span><Headphones/> Asesoría en línea <small>para elegir mejor</small></span><span><ShieldCheck/> Compra 100% segura <small>pago protegido</small></span></section>
 
-    <section id="inicio" className="hero-berel">
-      <img src="/hero-modern-berel.webp" alt="Color para cada proyecto: pinturas y soluciones Berel" fetchPriority="high" decoding="async"/>
-      <div className="hero-panel"><p>TIENDA OFICIAL BEREL MÉXICO</p><h1>Todo para pintar,<br/>proteger y renovar.</h1><span>Productos originales, asesoría especializada y entrega directa.</span><div><a className="red-button" href="#productos">Comprar ahora <ArrowRight/></a><a className="white-button" href="#asesoria">Ayúdame a elegir</a></div></div>
-    </section>
+    <section id="inicio" className={`hero-carousel theme-${heroSlides[hero].theme}`}><div className="hero-track" style={{transform:`translateX(-${hero*100}%)`}}>{heroSlides.map((slide,index)=><article className="hero-slide" key={slide.title}><div className="hero-panel"><p>{slide.eyebrow}</p><h1>{slide.title}</h1><span>{slide.copy}</span><div><a className="red-button" href="/tienda/todos">Comprar ahora <ArrowRight/></a><a className="white-button" href="#asesoria">Ayúdame a elegir</a></div></div><div className="hero-product"><img src={slide.image} alt={slide.title} fetchPriority={index===0?"high":undefined} decoding="async"/></div></article>)}</div><button className="hero-arrow prev" onClick={()=>setHero((hero-1+heroSlides.length)%heroSlides.length)} aria-label="Campaña anterior"><ChevronLeft/></button><button className="hero-arrow next" onClick={()=>setHero((hero+1)%heroSlides.length)} aria-label="Campaña siguiente"><ChevronRight/></button><div className="hero-dots">{heroSlides.map((_,i)=><button className={i===hero?"active":""} onClick={()=>setHero(i)} aria-label={`Ver campaña ${i+1}`} key={i}/>)}</div></section>
 
     <section id="categorias" className="content-section"><div className="section-title"><div><p>COMPRA POR CATEGORÍA</p><h2>Encuentra lo que necesitas</h2></div><button className="text-action" onClick={()=>{setCategory("Todos");document.querySelector("#productos")?.scrollIntoView({behavior:"smooth"})}}>Ver catálogo completo <ArrowRight size={17}/></button></div><div className="category-grid">{categories.map(c=><button onClick={()=>{setCategory(c.name==="Pinturas"?"Base agua":c.name==="Selladores"?"Selladores":"Todos");document.querySelector("#productos")?.scrollIntoView({behavior:"smooth"})}} className="category-card" key={c.name} style={{"--cat":c.color} as React.CSSProperties}><div><span>{c.count} productos</span><h3>{c.name}</h3><small>Ver categoría <ArrowRight size={15}/></small></div><img src={c.image} alt="" loading="lazy" decoding="async"/></button>)}</div></section>
 
@@ -74,5 +80,5 @@ export default function Home() {
     <footer id="contacto"><div><a className="berel-logo footer-logo" href="#inicio"><span>berel</span><small>PINTA CON CONFIANZA</small></a><p>Tienda en línea de pinturas, recubrimientos y accesorios Berel México.</p></div><div><h4>Compra</h4><a href="#productos">Tienda</a><a href="#categorias">Categorías</a><a href="#productos">Promociones</a></div><div><h4>Ayuda</h4><a href="#asesoria">Encuentra tu producto</a><a href="#ayuda">Preguntas frecuentes</a><a href="#contacto">Contacto</a></div><div><h4>Información</h4><a href="#inicio">Quiénes somos</a><a href="#inicio">Aviso de privacidad</a><a href="#inicio">Términos y condiciones</a></div><small className="copyright">© 2026 Berel México · Propuesta conceptual de rediseño</small></footer>
     <div className={cartOpen?"drawer-backdrop open":"drawer-backdrop"} onClick={()=>setCartOpen(false)}/><aside className={cartOpen?"cart-drawer open":"cart-drawer"} aria-hidden={!cartOpen}><div className="drawer-head"><div><small>Tu compra</small><h3>Carrito ({cart})</h3></div><button onClick={()=>setCartOpen(false)} aria-label="Cerrar carrito"><X/></button></div>{cart?<div className="drawer-item"><img src="/berel/pisos.png" alt="Producto Berel"/><div><b>Productos Berel</b><small>{cart} artículo{cart===1?"":"s"}</small></div><button onClick={()=>setCart(0)} aria-label="Vaciar carrito"><Trash2/></button></div>:<div className="empty-cart"><ShoppingCart/><h4>Tu carrito está vacío</h4><p>Explora los productos destacados y agrega tus favoritos.</p></div>}<div className="drawer-footer"><button disabled={!cart} onClick={()=>notify("Checkout listo para conectar")}>Continuar compra <ArrowRight/></button></div></aside>
     {toast && <div className="toast" role="status"><Check/>{toast}</div>}
-  </main>;
+  </main></>;
 }
