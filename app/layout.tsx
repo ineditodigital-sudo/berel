@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { headers } from "next/headers";
 import "./globals.css";
 import "./modern.css";
 
@@ -13,25 +14,42 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Berel México | Pinturas, impermeabilizantes y recubrimientos",
-  description: "Compra pinturas, impermeabilizantes, barnices y accesorios Berel con asesoría especializada.",
-  openGraph: {
-    title: "Berel México | Pinta con confianza",
-    description: "Productos originales, asesoría especializada y compra segura.",
-    images: [{ url: "/hero-modern-berel.webp", width: 1600, height: 894 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Berel México | Pinta con confianza",
-    description: "Productos originales, asesoría especializada y compra segura.",
-    images: ["/hero-modern-berel.webp"],
-  },
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const requestHeaders = await headers();
+  const host =
+    requestHeaders.get("x-forwarded-host") ??
+    requestHeaders.get("host") ??
+    "localhost:3001";
+  const protocol =
+    requestHeaders.get("x-forwarded-proto") ??
+    (host.startsWith("localhost") ? "http" : "https");
+  const metadataBase = new URL(`${protocol}://${host}`);
+  const socialImage = new URL("/og.png", metadataBase).toString();
+
+  return {
+    metadataBase,
+    title: "Berel México | Pinturas, impermeabilizantes y recubrimientos",
+    description:
+      "Compra pinturas, impermeabilizantes, barnices y accesorios Berel con asesoría especializada.",
+    openGraph: {
+      title: "Berel México | Pinta con confianza",
+      description:
+        "Productos originales, asesoría especializada y compra segura.",
+      images: [{ url: socialImage, width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Berel México | Pinta con confianza",
+      description:
+        "Productos originales, asesoría especializada y compra segura.",
+      images: [socialImage],
+    },
+    icons: {
+      icon: "/favicon.svg",
+      shortcut: "/favicon.svg",
+    },
+  };
+}
 
 export default function RootLayout({
   children,

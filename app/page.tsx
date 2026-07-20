@@ -7,14 +7,13 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  CircleUserRound,
   Headphones,
   Heart,
-  Menu,
   Minus,
   PackageCheck,
+  Pause,
+  Play,
   Plus,
-  Search,
   ShieldCheck,
   ShoppingCart,
   Star,
@@ -22,6 +21,7 @@ import {
   Truck,
   X,
 } from "lucide-react";
+import StoreHeader from "@/components/StoreHeader";
 
 const categories = [
   { name: "Pinturas", count: 20, image: "/berel/playa.png", color: "#e83338" },
@@ -117,7 +117,6 @@ const money = (n: number) =>
 export default function Home() {
   const [cart, setCart] = useState(0);
   const [query, setQuery] = useState("");
-  const [mobile, setMobile] = useState(false);
   const [size, setSize] = useState("19 L");
   const [qty, setQty] = useState(1);
   const [category, setCategory] = useState("Todos");
@@ -130,6 +129,7 @@ export default function Home() {
     "Fácil de limpiar",
   ]);
   const [hero, setHero] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
   const [splash, setSplash] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const visible = useMemo(
@@ -184,16 +184,29 @@ export default function Home() {
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    const splashTimer = window.setTimeout(() => setSplash(false), 1500);
-    const slider = window.setInterval(
-      () => setHero((v) => (v + 1) % heroSlides.length),
-      5500,
-    );
+    const splashWasSeen = window.sessionStorage.getItem("berel-splash-seen");
+    if (splashWasSeen) {
+      const immediateTimer = window.setTimeout(() => setSplash(false), 0);
+      return () => clearTimeout(immediateTimer);
+    }
+    window.sessionStorage.setItem("berel-splash-seen", "true");
+    const splashTimer = window.setTimeout(() => setSplash(false), 900);
     return () => {
       clearTimeout(splashTimer);
-      clearInterval(slider);
     };
   }, []);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    if (heroPaused || reducedMotion) return;
+    const slider = window.setInterval(
+      () => setHero((value) => (value + 1) % heroSlides.length),
+      6000,
+    );
+    return () => clearInterval(slider);
+  }, [heroPaused]);
 
   return (
     <>
@@ -214,106 +227,16 @@ export default function Home() {
             <a href="#cuenta">Facturación</a>
           </div>
         </div>
-        <header>
-          <div className="header-main">
-            <button
-              className="mobile-button"
-              onClick={() => setMobile(!mobile)}
-              aria-label={mobile ? "Cerrar menú" : "Abrir menú"}
-            >
-              {mobile ? <X /> : <Menu />}
-            </button>
-            <a
-              className="berel-logo"
-              href="#inicio"
-              aria-label="Berel México inicio"
-            >
-              <span>berel</span>
-              <small>PINTA CON CONFIANZA</small>
-            </a>
-            <form
-              className="searchbox search-live"
-              onSubmit={(e) => {
-                e.preventDefault();
-                visible[0]
-                  ? (window.location.href = `/producto/${visible[0].slug}`)
-                  : (window.location.href = `/tienda/todos?q=${encodeURIComponent(query)}`);
-              }}
-            >
-              <Search size={19} />
-              <input
-                aria-label="Buscar productos"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="¿Qué producto estás buscando?"
-              />
-              <button>Buscar</button>
-              {query.length > 1 && (
-                <div className="search-results">
-                  {visible.slice(0, 4).map((p) => (
-                    <button
-                      type="button"
-                      key={p.slug}
-                      onClick={() =>
-                        (window.location.href = `/producto/${p.slug}`)
-                      }
-                    >
-                      <img src={p.image} alt="" />
-                      <span>
-                        <b>{p.name}</b>
-                        <small>{p.category}</small>
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </form>
-            <div className="head-actions">
-              <a href="#cuenta">
-                <CircleUserRound />
-                <span>
-                  <small>Bienvenido</small>Mi cuenta
-                </span>
-              </a>
-              <button
-                className="round-action"
-                onClick={() =>
-                  notify(
-                    `${favorites.length} producto${favorites.length === 1 ? "" : "s"} en favoritos`,
-                  )
-                }
-                aria-label="Favoritos"
-              >
-                <Heart fill={favorites.length ? "currentColor" : "none"} />
-              </button>
-              <button
-                className="cart round-action"
-                onClick={() => setCartOpen(true)}
-                aria-label={`Carrito con ${cart} productos`}
-              >
-                <ShoppingCart />
-                <b>{cart}</b>
-              </button>
-            </div>
-          </div>
-          <nav
-            className={mobile ? "main-nav open" : "main-nav"}
-            aria-label="Navegación principal"
-          >
-            <a className="nav-all" href="/tienda/todos">
-              <Menu size={18} /> Todos los productos <ChevronDown size={15} />
-            </a>
-            <a href="/tienda/pinturas">Pinturas</a>
-            <a href="/tienda/impermeabilizantes">Impermeabilizantes</a>
-            <a href="/tienda/esmaltes">Esmaltes</a>
-            <a href="/tienda/maderas">Maderas</a>
-            <a href="/tienda/accesorios">Accesorios</a>
-            <a className="sale" href="/tienda/promociones">
-              Promociones
-            </a>
-            <a href="#asesoria">Encuentra tu producto</a>
-          </nav>
-        </header>
+        <StoreHeader
+          cartCount={cart}
+          favoritesCount={favorites.length}
+          onCartClick={() => setCartOpen(true)}
+          onFavoritesClick={() =>
+            notify(
+              `${favorites.length} producto${favorites.length === 1 ? "" : "s"} en favoritos`,
+            )
+          }
+        />
 
         <section className="trustbar">
           <span>
@@ -330,18 +253,30 @@ export default function Home() {
         <section
           id="inicio"
           className={`hero-carousel theme-${heroSlides[hero].theme}`}
+          aria-roledescription="carrusel"
+          aria-label="Campañas destacadas"
+          onMouseEnter={() => setHeroPaused(true)}
+          onMouseLeave={() => setHeroPaused(false)}
+          onFocusCapture={() => setHeroPaused(true)}
+          onBlurCapture={() => setHeroPaused(false)}
         >
           <div
             className="hero-track"
             style={{ transform: `translateX(-${hero * 100}%)` }}
           >
             {heroSlides.map((slide, index) => (
-              <article className="hero-slide" key={slide.title}>
+              <article
+                className="hero-slide"
+                key={slide.title}
+                aria-hidden={index !== hero}
+                inert={index !== hero}
+              >
                 <div className="hero-panel">
                   <p>{slide.eyebrow}</p>
                   <h1>{slide.title}</h1>
                   <span>{slide.copy}</span>
                   <div>
+                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
                     <a className="red-button" href="/tienda/todos">
                       Comprar ahora <ArrowRight />
                     </a>
@@ -386,6 +321,17 @@ export default function Home() {
                 key={i}
               />
             ))}
+            <button
+              className="hero-pause"
+              onClick={() => setHeroPaused((value) => !value)}
+              aria-label={
+                heroPaused
+                  ? "Reanudar rotación del carrusel"
+                  : "Pausar rotación del carrusel"
+              }
+            >
+              {heroPaused ? <Play /> : <Pause />}
+            </button>
           </div>
         </section>
 
