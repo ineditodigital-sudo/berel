@@ -8,6 +8,10 @@ type RuntimeEnv = { DB: D1Database };
 function normalizeValue(type: string | undefined, value: unknown) {
   if (type === "boolean") return value ? 1 : 0;
   if (type === "number") return value === "" || value == null ? null : Number(value);
+  if (type === "money") {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number * 100) : null;
+  }
   return typeof value === "string" ? value.trim() : value ?? "";
 }
 

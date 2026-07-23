@@ -1,7 +1,7 @@
 export type CmsField = {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "number" | "boolean" | "url" | "json";
+  type?: "text" | "textarea" | "number" | "money" | "boolean" | "url" | "json";
   required?: boolean;
 };
 
@@ -23,11 +23,11 @@ export const cmsResources: Record<string, CmsResource> = {
       { key: "sku", label: "SKU" },
       { key: "name", label: "Nombre", required: true },
       { key: "slug", label: "Slug", required: true },
-      { key: "category_id", label: "ID de categoría" },
+      { key: "category_id", label: "Categoría" },
       { key: "short_description", label: "Descripción corta", type: "textarea" },
       { key: "description", label: "Descripción", type: "textarea" },
-      { key: "price_cents", label: "Precio en centavos", type: "number", required: true },
-      { key: "compare_at_cents", label: "Precio anterior en centavos", type: "number" },
+      { key: "price_cents", label: "Precio (MXN)", type: "money", required: true },
+      { key: "compare_at_cents", label: "Precio anterior (MXN)", type: "money" },
       { key: "stock", label: "Existencia", type: "number" },
       { key: "image_url", label: "Imagen", type: "url" },
       { key: "gallery_json", label: "Galería (JSON)", type: "json" },
@@ -72,7 +72,7 @@ export const cmsResources: Record<string, CmsResource> = {
     singular: "bloque",
     orderBy: "page_id ASC, sort_order ASC",
     fields: [
-      { key: "page_id", label: "ID de página", required: true },
+      { key: "page_id", label: "Página", required: true },
       { key: "block_key", label: "Clave", required: true },
       { key: "type", label: "Tipo", required: true },
       { key: "title", label: "Título" },
@@ -144,7 +144,7 @@ export const cmsResources: Record<string, CmsResource> = {
   },
   settings: {
     table: "site_settings",
-    label: "Configuración",
+    label: "Ajustes de la tienda",
     singular: "configuración",
     orderBy: "key ASC",
     fields: [

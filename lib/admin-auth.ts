@@ -10,6 +10,16 @@ function allowedEmails(): string[] {
 }
 
 export async function requireAdminPage(returnTo = "/admin") {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.ADMIN_PREVIEW === "true"
+  ) {
+    return {
+      displayName: "Equipo Berel",
+      email: DEFAULT_ADMIN_EMAILS[0],
+      fullName: "Equipo Berel",
+    };
+  }
   const user = await requireChatGPTUser(returnTo);
   if (!allowedEmails().includes(user.email.toLowerCase())) {
     throw new Error("Esta cuenta no tiene acceso al CMS.");
@@ -20,6 +30,12 @@ export async function requireAdminPage(returnTo = "/admin") {
 export async function requireAdminApi(): Promise<
   { ok: true; email: string } | { ok: false; response: Response }
 > {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    process.env.ADMIN_PREVIEW === "true"
+  ) {
+    return { ok: true, email: DEFAULT_ADMIN_EMAILS[0] };
+  }
   const user = await getChatGPTUser();
   if (!user) {
     return {

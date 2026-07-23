@@ -12,6 +12,10 @@ function normalizeValue(type: string | undefined, value: unknown) {
     const number = Number(value);
     return Number.isFinite(number) ? number : null;
   }
+  if (type === "money") {
+    const number = Number(value);
+    return Number.isFinite(number) ? Math.round(number * 100) : null;
+  }
   return typeof value === "string" ? value.trim() : value ?? "";
 }
 
