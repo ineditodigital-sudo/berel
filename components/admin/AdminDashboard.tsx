@@ -14,11 +14,13 @@ import {
   MoreHorizontal,
   Package,
   PanelTop,
+  Pencil,
   Plus,
   Search,
   Settings,
   ShoppingBag,
   Store,
+  Trash2,
   Upload,
   X,
 } from "lucide-react";
@@ -341,19 +343,27 @@ export default function AdminDashboard({ userName }: { userName: string }) {
                   )}
                   <div className="resource-card-body">
                     <div className="resource-card-top">
-                      <span className={row.is_active === 0 ? "state-pill off" : "state-pill"}>{row.status ? String(row.status) : row.is_active === 0 ? "Oculto" : "Visible"}</span>
-                      <button aria-label={`Opciones de ${titleFor(row)}`}><MoreHorizontal /></button>
+                      <div className="resource-meta">
+                        <span className={row.is_active === 0 ? "state-pill off" : "state-pill"}>{row.status ? String(row.status) : row.is_active === 0 ? "Oculto" : "Visible"}</span>
+                        {subtitleFor(row) && <span className="resource-reference">{subtitleFor(row)}</span>}
+                      </div>
+                      {!["orders"].includes(active) && (
+                        <details className="resource-menu">
+                          <summary aria-label={`Opciones de ${titleFor(row)}`}><MoreHorizontal /></summary>
+                          <div>
+                            <button onClick={() => void remove(row)}><Trash2 /> Eliminar</button>
+                          </div>
+                        </details>
+                      )}
                     </div>
                     <h2>{titleFor(row)}</h2>
-                    {subtitleFor(row) && <p>{subtitleFor(row)}</p>}
                     {active === "products" && <strong>{moneyFromCents(row.price_cents)}</strong>}
                     {active === "orders" && <strong>{moneyFromCents(row.total_cents)}</strong>}
                     {active === "faqs" && <p className="card-excerpt">{String(row.answer ?? "")}</p>}
                     {active === "branches" && <p className="card-excerpt">{String(row.schedule ?? "")}</p>}
                   </div>
                   <footer>
-                    <button onClick={() => setEditing(row)}>Editar</button>
-                    {!["orders"].includes(active) && <button className="quiet-danger" onClick={() => void remove(row)}>Eliminar</button>}
+                    <button onClick={() => setEditing(row)}><Pencil /> {active === "products" ? "Editar producto" : "Editar"}</button>
                   </footer>
                 </article>
               );

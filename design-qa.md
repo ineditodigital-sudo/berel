@@ -1,66 +1,50 @@
-# Design QA — Berel mobile first
+# Design QA — CMS product cards
 
-## Evidencia
+- Source visual truth: `C:\Users\Maindsoft\.codex\generated_images\019f90fc-0b7c-7d90-b7d3-508a6f7a91ad\call_DfN6V7ULhv7F3QmTQpBOAqAD.png`
+- Source pixels: 1536 × 1060
+- Intended implementation viewport: 1440 × 1024 desktop, plus responsive checks at 1024, 768 and 375 CSS px
+- Intended state: Products module with populated cards
+- Implementation screenshot: unavailable
+- Density normalization: not applicable because the implementation capture is blocked
 
-- Fuente visual: `outputs/qa-local/inicio-mobile-final.png`
-- Implementación principal: `outputs/qa-local/mobile-first-home-390-final.png`
-- Comparación de vista completa: `outputs/qa-local/comparacion-mobile-first-final.png`
-- Menú abierto: `outputs/qa-local/mobile-first-menu-390-v2.png`
-- Búsqueda activa: `outputs/qa-local/mobile-first-search-390.png`
-- Catálogo: `outputs/qa-local/mobile-first-catalog-390.png`
-- Ficha de producto: `outputs/qa-local/mobile-first-product-390.png`
-- Compra en ficha: `outputs/qa-local/mobile-first-product-purchase-390-v2.png`
-- Anchos complementarios: `outputs/qa-local/mobile-first-home-375.png` y `outputs/qa-local/mobile-first-home-768-v2.png`
+**Findings**
 
-## Viewports y estados
+- [P1] Browser-rendered comparison is unavailable
+  - Location: `/admin`
+  - Evidence: the local in-app browser cannot resolve the workspace preview host, while the deployed CMS requires a signed-in private session.
+  - Impact: typography, spacing, menu layering and final viewport overflow cannot be certified visually against the selected concept.
+  - Fix: open the protected deployment in an authenticated in-app browser session, capture the products state at the same viewport and run the visual comparison.
 
-- 390 × 844: inicio, menú abierto, búsqueda con `pisos`, catálogo y producto.
-- 375 × 812: inicio.
-- 768 × 1024: transición a tableta.
-- Sin desbordamiento horizontal: `scrollWidth` coincide con `clientWidth` en 375, 390 y 768.
+**Required fidelity surfaces**
 
-## Comparación visual
+- Fonts and typography: Quicksand remains configured; browser evidence pending.
+- Spacing and layout rhythm: implemented from the selected card proportions; browser evidence pending.
+- Colors and visual tokens: neutral surfaces and state colors preserved; the generated red active-edge treatment was intentionally excluded by the user's global rule.
+- Image quality and asset fidelity: existing real product images and Berel logo are preserved; browser crop evidence pending.
+- Copy and content: Spanish product labels and “Editar producto” match the selected direction.
 
-La comparación de vista completa confirma que el contenido prioritario cabe mejor en el primer viewport: la búsqueda, el beneficio principal, el mensaje completo del hero, sus dos acciones y el inicio de categorías permanecen visibles. El arte original, la paleta Berel y la jerarquía editorial se conservan.
+**Full-view comparison evidence**
 
-Se usaron vistas enfocadas porque los detalles críticos —menú, resultados de búsqueda, grilla de catálogo y controles de compra— no podían juzgarse con precisión en la comparación general.
+Blocked: no browser-rendered implementation screenshot is available.
 
-## Superficies de fidelidad
+**Focused region comparison evidence**
 
-- Tipografía: Geist se mantiene; cuerpo e inputs móviles usan 16 px o más, encabezados tienen interlineado compacto y no hay truncamientos.
-- Espaciado y ritmo: gutter base de 16 px, radios de 18–20 px, separación táctil mínima de 8 px y objetivos de 44 px.
-- Colores y tokens: se conservan rojo, negro, blanco, azul y amarillo Berel con contraste legible.
-- Imágenes: se reutilizan los artes y productos reales del proyecto; el crop móvil del primer hero prioriza envases y elimina texto fragmentado.
-- Copy: se conserva el contenido aprobado y las etiquetas de comercio; el catálogo respeta mayúsculas naturales en español.
+Blocked for the same reason; the product-card action area requires an authenticated rendered capture.
 
-## Hallazgos
+**Comparison history**
 
-- No quedan hallazgos P0, P1 o P2 abiertos.
-- [P3] La navegación horizontal de tableta muestra parcialmente el siguiente enlace como indicación de desplazamiento. Es deliberado y no bloquea interacción.
-- [P3] El panel del primer hero cubre parte del envase principal. Se acepta para priorizar legibilidad y conversión en una pantalla estrecha.
+- Initial implementation: replaced the detached black footer with a continuous editorial action row, moved deletion into the contextual menu, stabilized two-line titles, increased touch targets and added overflow containment.
+- Post-fix visual evidence: unavailable because browser access is blocked.
 
-## Historial de comparación
+**Implementation Checklist**
 
-1. [P1] El menú móvil conservaba una altura de escritorio y solo mostraba el primer enlace. Se convirtió en una hoja de navegación de altura completa; la evidencia posterior es `mobile-first-menu-390-v2.png`.
-2. [P1] El selector de cantidad heredaba el ancho de otro componente y se superponía al precio. Se acotó la regla al bloque destacado; la evidencia posterior es `mobile-first-product-purchase-390-v2.png`.
-3. [P2] A 768 px el encabezado usaba dos columnas y recortaba logo, acciones y navegación. Se añadió una transición específica de tableta; la evidencia posterior es `mobile-first-home-768-v2.png`.
-4. [P2] El crop inicial del hero dejaba fragmentos grandes del texto integrado en la imagen. Se desplazó el foco hacia los productos; la evidencia posterior es `mobile-first-home-390-final.png`.
+- Capture `/admin` while authenticated at 1440 × 1024.
+- Verify the three-column card grid and contextual menu.
+- Repeat at 1024, 768 and 375 CSS px.
+- Confirm zero horizontal overflow and no clipped dropdowns.
 
-## Interacciones y ejecución
+**Follow-up Polish**
 
-- Menú: abre, bloquea el fondo, muestra todas las rutas y permite cerrarse.
-- Buscador: `pisos` muestra `Pintura para Pisos Serie 3800`.
-- Carrusel: controles anterior, siguiente, indicadores y pausa permanecen disponibles.
-- Consola: sin errores ni advertencias de ejecución en la captura final.
-- Compilación: completada correctamente.
+- None classified until browser-rendered evidence is available.
 
-## Checklist de implementación
-
-- [x] Header sticky y buscador de 48 px.
-- [x] Beneficios desplazables y visibles.
-- [x] Hero móvil legible sin recortes de UI.
-- [x] Categorías y catálogo en grilla táctil.
-- [x] Ficha de producto y controles de compra sin solapamientos.
-- [x] Menú, búsqueda, 375 px, 390 px y 768 px comprobados.
-
-final result: passed
+final result: blocked
