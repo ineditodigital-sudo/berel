@@ -1,98 +1,73 @@
-# vinext-starter
+# Berel Commerce
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Tienda en línea y CMS de Berel para operación local en Aguascalientes.
 
-## Prerequisites
+## Funciones
 
-- Node.js `>=22.13.0`
+- Catálogo, categorías, fichas de producto, carruseles y contenido administrables.
+- CMS protegido en `/admin`.
+- CRUD de productos, categorías, páginas, bloques, FAQ, sucursales y pedidos.
+- Biblioteca de imágenes y fichas PDF en Cloudflare R2.
+- Importación y actualización masiva de productos por CSV.
+- Carrito, compra mínima configurable, envío local y retiro en sucursal.
+- Pedidos persistentes en Cloudflare D1.
+- Checkout Pro de Mercado Pago y webhook de confirmación.
+- Correo al cliente y al administrador mediante Resend.
+- WhatsApp general y mensaje configurable por producto.
 
-## Quick Start
+## Desarrollo
+
+Requiere Node.js 22.13 o superior.
 
 ```bash
 npm install
 npm run dev
-npm run build
+npm test
+npm run lint
 ```
 
-This starter does not use `wrangler.jsonc`.
+El proyecto usa Vinext, React 19, Cloudflare D1 y R2. La configuración lógica de
+recursos está en `.openai/hosting.json` y las migraciones en `drizzle/`.
 
-## Included Shape
+## Acceso al CMS
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+El CMS usa Sign in with ChatGPT y valida el correo en el servidor. Configura
+`ADMIN_EMAILS` como una lista separada por comas. Nunca confíes solamente en
+ocultar enlaces del panel.
 
-## Workspace Auth Headers
+## CSV de productos
 
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
+Columnas reconocidas:
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```csv
+sku,name,slug,category,short_description,description,price,stock,image_url,technical_sheet_url
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+También se aceptan los encabezados en español `nombre`, `categoria`, `precio`,
+`existencia`, `imagen`, `descripcion` y `ficha_tecnica`. El precio se expresa
+en pesos mexicanos. Un producto existente se actualiza por SKU o slug.
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+## Pagos y notificaciones
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+Copia `.env.example` a `.env.local` para desarrollo. En producción, registra
+los valores como secretos del entorno:
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+- `MERCADO_PAGO_ACCESS_TOKEN`
+- `RESEND_API_KEY`
+- `ORDER_EMAIL_FROM`
+- `ADMIN_EMAILS`
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+Activa Mercado Pago desde el registro `payments` del módulo Configuración
+después de colocar el token. Los secretos nunca se guardan en D1 ni se muestran
+en el CMS.
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+## Operación predeterminada
 
-## Useful Commands
+- Moneda: MXN.
+- Compra mínima: $800 MXN.
+- Envíos: únicamente Aguascalientes.
+- Costo de envío: gratis.
+- Promesa: máximo 24 horas después de confirmar el pago.
+- Retiro en sucursal: habilitado.
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Estos valores se pueden editar desde el módulo Configuración del CMS.

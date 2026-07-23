@@ -1,67 +1,19 @@
 "use client";
 /* eslint-disable @next/next/no-html-link-for-pages */
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  CircleUserRound,
-  Heart,
-  Menu,
-  Search,
-  ShoppingCart,
-  X,
-} from "lucide-react";
-import { menuPages, products, slugify } from "@/lib/store-data";
+import { useEffect, useState } from "react";
+import { ChevronDown, Menu, ShoppingCart, X } from "lucide-react";
+import { menuPages, slugify } from "@/lib/store-data";
+import { useCart } from "@/lib/cart-context";
 
-type StoreHeaderProps = {
-  cartCount?: number;
-  favoritesCount?: number;
-  onCartClick?: () => void;
-  onFavoritesClick?: () => void;
-};
-
-export default function StoreHeader({
-  cartCount = 0,
-  favoritesCount = 0,
-  onCartClick,
-  onFavoritesClick,
-}: StoreHeaderProps) {
-  const [query, setQuery] = useState("");
+export default function StoreHeader() {
   const [open, setOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const router = useRouter();
-  const results = useMemo(
-    () =>
-      query.trim().length > 1
-        ? products
-            .filter((product) => {
-              const term = query.toLocaleLowerCase("es-MX");
-              return [
-                product.name,
-                product.category,
-                product.description,
-                product.uses,
-              ].some((value) =>
-                value.toLocaleLowerCase("es-MX").includes(term),
-              );
-            })
-            .slice(0, 5)
-        : [],
-    [query],
-  );
+  const { count: cartCount, openCart } = useCart();
 
   useEffect(() => {
     document.body.classList.toggle("mobile-menu-open", open);
     return () => document.body.classList.remove("mobile-menu-open");
   }, [open]);
-
-  const submit = (event: React.FormEvent) => {
-    event.preventDefault();
-    setSearchOpen(false);
-    if (results[0]) router.push(`/producto/${results[0].slug}`);
-    else router.push(`/tienda/todos?q=${encodeURIComponent(query.trim())}`);
-  };
 
   return (
     <header className="store-header">
@@ -78,95 +30,17 @@ export default function StoreHeader({
           {open ? <X /> : <Menu />}
         </button>
         <a className="berel-logo" href="/" aria-label="Berel México, inicio">
-          <span>berel</span>
-          <small>PINTA CON CONFIANZA</small>
+          <img src="/berel-icono.png" alt="Berel" />
         </a>
-        <form className="searchbox search-live" onSubmit={submit} role="search">
-          <Search size={19} aria-hidden="true" />
-          <label className="sr-only" htmlFor="global-search">
-            Buscar productos
-          </label>
-          <input
-            id="global-search"
-            role="combobox"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setSearchOpen(true);
-            }}
-            onFocus={() => setSearchOpen(true)}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") setSearchOpen(false);
-            }}
-            aria-autocomplete="list"
-            aria-controls="global-search-results"
-            aria-expanded={searchOpen && query.trim().length > 1}
-            placeholder="¿Qué necesitas pintar?"
-          />
-          <button type="submit">Buscar</button>
-          {searchOpen && query.trim().length > 1 && (
-            <div
-              className="search-results"
-              id="global-search-results"
-              role="listbox"
-              aria-label="Sugerencias de productos"
-            >
-              {results.length ? (
-                results.map((product) => (
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected="false"
-                    key={product.slug}
-                    onClick={() => router.push(`/producto/${product.slug}`)}
-                  >
-                    <img src={product.image} alt="" />
-                    <span>
-                      <b>{product.name}</b>
-                      <small>{product.category}</small>
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="search-empty">No encontramos coincidencias.</p>
-              )}
-            </div>
-          )}
-        </form>
         <div className="head-actions header-actions">
-          <a href="#cuenta" aria-label="Ir a mi cuenta">
-            <CircleUserRound />
-            <span>
-              <small>Bienvenido</small>
-              Mi cuenta
-            </span>
-          </a>
           <button
-            className="round-action"
-            onClick={onFavoritesClick}
-            aria-label={`Favoritos: ${favoritesCount}`}
+            className="cart round-action"
+            onClick={openCart}
+            aria-label={`Carrito con ${cartCount} productos`}
           >
-            <Heart fill={favoritesCount ? "currentColor" : "none"} />
+            <ShoppingCart />
+            <b>{cartCount}</b>
           </button>
-          {onCartClick ? (
-            <button
-              className="cart round-action"
-              onClick={onCartClick}
-              aria-label={`Carrito con ${cartCount} productos`}
-            >
-              <ShoppingCart />
-              <b>{cartCount}</b>
-            </button>
-          ) : (
-            <a
-              className="cart round-action"
-              href="/tienda/todos"
-              aria-label="Ir al catálogo"
-            >
-              <ShoppingCart />
-              <b>{cartCount}</b>
-            </a>
-          )}
         </div>
       </div>
       <nav

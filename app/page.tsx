@@ -17,70 +17,18 @@ import {
   ShieldCheck,
   ShoppingCart,
   Star,
-  Trash2,
   Truck,
   X,
 } from "lucide-react";
 import StoreHeader from "@/components/StoreHeader";
+import { cmsProductToStore, money, products, type CmsProductRow } from "@/lib/store-data";
+import { useCart } from "@/lib/cart-context";
 
-const categories = [
-  { name: "Pinturas", count: 20, image: "/berel/playa.png", color: "#e83338" },
-  {
-    name: "Impermeabilizantes",
-    count: 14,
-    image: "/berel/imper.webp",
-    color: "#178cc4",
-  },
-  { name: "Esmaltes", count: 12, image: "/berel/summa.png", color: "#f3b51b" },
-  {
-    name: "Selladores",
-    count: 7,
-    image: "/berel/salitre.png",
-    color: "#323f9c",
-  },
-];
-
-const products = [
-  {
-    slug: "pintura-pisos-3800",
-    name: "Pintura para Pisos Serie 3800",
-    category: "Base agua",
-    image: "/berel/pisos.png",
-    from: 1385,
-    to: 6319,
-    tag: "Alta resistencia",
-    rating: 4.9,
-  },
-  {
-    slug: "sellador-anti-salitre-530",
-    name: "Sellador Anti-Salitre No. 530",
-    category: "Selladores",
-    image: "/berel/salitre.png",
-    from: 195,
-    to: 3165,
-    tag: "Contra humedad",
-    rating: 4.8,
-  },
-  {
-    slug: "berelex-playa",
-    name: "Berelex Pintura para Playa",
-    category: "Exteriores",
-    image: "/berel/playa.png",
-    from: 835,
-    to: 3559,
-    tag: "Clima extremo",
-    rating: 4.9,
-  },
-  {
-    slug: "pintura-pizarron-4600",
-    name: "Pintura para Pizarrón Serie 4600",
-    category: "Decorativos",
-    image: "/berel/pizarron.png",
-    from: 283.5,
-    old: 375,
-    tag: "Oferta",
-    rating: 4.7,
-  },
+const categoryCards = [
+  { name: "Pinturas", image: "/berel/playa.png", color: "#e83338" },
+  { name: "Impermeabilizantes", image: "/berel/imper.png", color: "#178cc4" },
+  { name: "Esmaltes", image: "/berel/summa.png", color: "#f3b51b" },
+  { name: "Selladores", image: "/berel/salitre.png", color: "#323f9c" },
 ];
 
 const heroSlides = [
@@ -107,61 +55,75 @@ const heroSlides = [
   },
 ];
 
-const money = (n: number) =>
-  n.toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-    minimumFractionDigits: 2,
-  });
+const FEATURED_SLUG = "pintura-pisos-3800";
 
 export default function Home() {
-  const [cart, setCart] = useState(0);
+  const { add } = useCart();
+  const [catalogProducts, setCatalogProducts] = useState(products);
   const [query, setQuery] = useState("");
-  const [size, setSize] = useState("19 L");
-  const [qty, setQty] = useState(1);
   const [category, setCategory] = useState("Todos");
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [toast, setToast] = useState("");
-  const [finder, setFinder] = useState([
-    "Muros y plafones",
-    "Interior",
-    "Fácil de limpiar",
-  ]);
+  const [advSurface, setAdvSurface] = useState("");
+  const [advLocation, setAdvLocation] = useState("");
+  const [advResult, setAdvResult] = useState<
+    { p: (typeof products)[number]; reason: string } | null
+  >(null);
+  const recommend = useCallback(() => {
+    const find = (s: string) =>
+      catalogProducts.find((p) => p.slug === s) ??
+      products.find((p) => p.slug === s)!;
+    let p, reason;
+    if (advSurface === "Pisos") {
+      p = find("pintura-pisos-3800");
+      reason = "Para pisos de concreto: acabado satinado, antiderrapante y resistente al tráfico.";
+    } else if (advSurface === "Techo o azotea") {
+      p = find("impermeabilizante-acrilico");
+      reason = "Para techos y azoteas: sella filtraciones y resiste sol y lluvia.";
+    } else if (advSurface === "Madera") {
+      p = find("barniz-maderas");
+      reason = "Para madera: realza la veta natural y protege de la humedad.";
+    } else if (advLocation === "Exterior") {
+      p = find("berelex-playa");
+      reason = "Para muros exteriores: resiste sol, humedad y clima exigente sin decolorarse.";
+    } else {
+      p = find("sellador-anti-salitre-530");
+      reason = "Ideal para preparar y proteger muros interiores contra la humedad y el salitre.";
+    }
+    setAdvResult({ p, reason });
+  }, [advSurface, advLocation, catalogProducts]);
   const [hero, setHero] = useState(0);
   const [heroManuallyPaused, setHeroManuallyPaused] = useState(false);
   const [heroInteractionPaused, setHeroInteractionPaused] = useState(false);
   const [splash, setSplash] = useState(true);
   const carouselRef = useRef<HTMLDivElement>(null);
   const heroPaused = heroManuallyPaused || heroInteractionPaused;
+
   const visible = useMemo(
     () =>
-      products.filter(
+      catalogProducts.filter(
         (p) =>
           p.name.toLowerCase().includes(query.toLowerCase()) &&
-          (category === "Todos" ||
-            p.category.toLowerCase().includes(category.toLowerCase())),
+          (category === "Todos" || p.category === category),
       ),
-    [query, category],
+    [query, category, catalogProducts],
   );
-  const notify = useCallback((message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2200);
+
+  useEffect(() => {
+    fetch("/api/storefront")
+      .then((response) => response.json())
+      .then((data: { products?: CmsProductRow[] }) => {
+        if (data.products?.length) {
+          setCatalogProducts(data.products.map(cmsProductToStore));
+        }
+      })
+      .catch(() => undefined);
   }, []);
-  const addToCart = useCallback(
-    (amount = 1) => {
-      setCart((value) => value + amount);
-      notify("Producto agregado al carrito");
-    },
-    [notify],
-  );
-  const toggleFavorite = useCallback((name: string) => {
-    setFavorites((items) =>
-      items.includes(name)
-        ? items.filter((item) => item !== name)
-        : [...items, name],
-    );
+
+  const goToProducts = useCallback(() => {
+    document
+      .querySelector("#productos")
+      ?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
   const scrollProducts = useCallback(
     (direction: number) =>
       carouselRef.current?.scrollBy({
@@ -170,6 +132,24 @@ export default function Home() {
       }),
     [],
   );
+
+  useEffect(() => {
+    // Evita que la página salte automáticamente a una sección (p. ej. #asesoria)
+    // al cargar: siempre inicia arriba y limpia el ancla de la URL.
+    if (typeof window === "undefined") return;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    if (window.location.hash) {
+      window.history.replaceState(
+        null,
+        "",
+        window.location.pathname + window.location.search,
+      );
+    }
+    window.scrollTo(0, 0);
+  }, []);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) =>
@@ -179,16 +159,24 @@ export default function Home() {
         ),
       { threshold: 0.06, rootMargin: "0px 0px 18% 0px" },
     );
-    document
-      .querySelectorAll(
-        "#categorias, #asesoria, #productos, .featured-product, .service-grid, footer",
-      )
-      .forEach((section) => {
-        section.classList.add("reveal");
-        observer.observe(section);
-      });
-    return () => observer.disconnect();
+    const revealed = document.querySelectorAll(
+      "#asesoria, .service-grid, footer",
+    );
+    revealed.forEach((section) => {
+      section.classList.add("reveal");
+      observer.observe(section);
+    });
+    // Safety net: never leave content hidden if the observer never fires.
+    const safety = window.setTimeout(
+      () => revealed.forEach((s) => s.classList.add("is-visible")),
+      1800,
+    );
+    return () => {
+      observer.disconnect();
+      clearTimeout(safety);
+    };
   }, []);
+
   useEffect(() => {
     const splashWasSeen = window.sessionStorage.getItem("berel-splash-seen");
     if (splashWasSeen) {
@@ -196,7 +184,7 @@ export default function Home() {
       return () => clearTimeout(immediateTimer);
     }
     window.sessionStorage.setItem("berel-splash-seen", "true");
-    const splashTimer = window.setTimeout(() => setSplash(false), 900);
+    const splashTimer = window.setTimeout(() => setSplash(false), 350);
     return () => {
       clearTimeout(splashTimer);
     };
@@ -213,6 +201,54 @@ export default function Home() {
     );
     return () => clearInterval(slider);
   }, [heroPaused]);
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!el) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let paused = false;
+    let resume: ReturnType<typeof setTimeout>;
+    const hold = () => {
+      paused = true;
+      clearTimeout(resume);
+    };
+    const release = () => {
+      clearTimeout(resume);
+      resume = setTimeout(() => (paused = false), 4500);
+    };
+    el.addEventListener("pointerdown", hold);
+    el.addEventListener("pointerup", release);
+    el.addEventListener("mouseenter", hold);
+    el.addEventListener("mouseleave", release);
+    const id = window.setInterval(() => {
+      if (paused) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 4) return;
+      const step = el.clientWidth * 0.82;
+      if (el.scrollLeft >= max - 8) el.scrollTo({ left: 0, behavior: "smooth" });
+      else el.scrollBy({ left: step, behavior: "smooth" });
+    }, 3200);
+    return () => {
+      clearInterval(id);
+      clearTimeout(resume);
+      el.removeEventListener("pointerdown", hold);
+      el.removeEventListener("pointerup", release);
+      el.removeEventListener("mouseenter", hold);
+      el.removeEventListener("mouseleave", release);
+    };
+  }, [visible.length]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const solid = window.scrollY > Math.max(0, window.innerHeight * 0.62);
+      document.body.classList.toggle("home-scrolled", solid);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      document.body.classList.remove("home-scrolled");
+    };
+  }, []);
 
   return (
     <>
@@ -224,25 +260,17 @@ export default function Home() {
           <span />
         </div>
       )}
-      <main id="main-content">
+      <main id="main-content" className="home-shell">
         <div className="utility">
           <span>Envíos en CDMX y Edo. Méx.</span>
           <div>
             <a href="#ayuda">Preguntas frecuentes</a>
             <a href="#contacto">Contacto</a>
-            <a href="#cuenta">Facturación</a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/cuenta#facturacion">Facturación</a>
           </div>
         </div>
-        <StoreHeader
-          cartCount={cart}
-          favoritesCount={favorites.length}
-          onCartClick={() => setCartOpen(true)}
-          onFavoritesClick={() =>
-            notify(
-              `${favorites.length} producto${favorites.length === 1 ? "" : "s"} en favoritos`,
-            )
-          }
-        />
+        <StoreHeader />
 
         <section className="trustbar">
           <span>
@@ -296,6 +324,7 @@ export default function Home() {
                     src={slide.image}
                     alt={slide.title}
                     fetchPriority={index === 0 ? "high" : undefined}
+                    loading={index === 0 ? undefined : "lazy"}
                     decoding="async"
                   />
                 </div>
@@ -352,119 +381,150 @@ export default function Home() {
               className="text-action"
               onClick={() => {
                 setCategory("Todos");
-                document
-                  .querySelector("#productos")
-                  ?.scrollIntoView({ behavior: "smooth" });
+                goToProducts();
               }}
             >
               Ver catálogo completo <ArrowRight size={17} />
             </button>
           </div>
           <div className="category-grid">
-            {categories.map((c) => (
-              <button
-                onClick={() => {
-                  setCategory(
-                    c.name === "Pinturas"
-                      ? "Base agua"
-                      : c.name === "Selladores"
-                        ? "Selladores"
-                        : "Todos",
-                  );
-                  document
-                    .querySelector("#productos")
-                    ?.scrollIntoView({ behavior: "smooth" });
-                }}
-                className="category-card"
-                key={c.name}
-                style={{ "--cat": c.color } as React.CSSProperties}
-              >
-                <div>
-                  <span>{c.count} productos</span>
-                  <h3>{c.name}</h3>
-                  <small>
-                    Ver categoría <ArrowRight size={15} />
-                  </small>
-                </div>
-                <img src={c.image} alt="" loading="lazy" decoding="async" />
-              </button>
-            ))}
+            {categoryCards.map((c) => {
+              const count = catalogProducts.filter(
+                (p) => p.category === c.name,
+              ).length;
+              return (
+                <button
+                  onClick={() => {
+                    setCategory(c.name);
+                    goToProducts();
+                  }}
+                  className="category-card"
+                  key={c.name}
+                  style={{ "--cat": c.color } as React.CSSProperties}
+                >
+                  <div>
+                    <span>{count} producto{count === 1 ? "" : "s"}</span>
+                    <h3>{c.name}</h3>
+                    <small>
+                      Ver categoría <ArrowRight size={15} />
+                    </small>
+                  </div>
+                  <img src={c.image} alt="" loading="lazy" decoding="async" />
+                </button>
+              );
+            })}
           </div>
         </section>
 
-        <section id="asesoria" className="finder">
-          <div>
-            <p>ELIGE CON CONFIANZA</p>
-            <h2>No todas las pinturas sirven para lo mismo.</h2>
-            <span>
-              Cuéntanos qué vas a pintar y te llevamos al producto correcto.
-            </span>
+        <section id="asesoria" className="advisor">
+          <p className="advisor-eyebrow">ASESOR DE PRODUCTO</p>
+          <h2>¿No sabes cuál elegir?</h2>
+          <span className="advisor-sub">
+            Responde 2 preguntas y te decimos exactamente qué producto necesitas.
+          </span>
+
+          <div className="adv-q">
+            <div className="adv-label">
+              <b>1</b> ¿Qué vas a pintar o proteger?
+            </div>
+            <div className="adv-chips">
+              {["Muros", "Pisos", "Techo o azotea", "Madera"].map((o) => (
+                <button
+                  key={o}
+                  className={advSurface === o ? "adv-chip on" : "adv-chip"}
+                  onClick={() => setAdvSurface(o)}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+            <small className={advSurface ? "adv-hint done" : "adv-hint"}>
+              {advSurface ? `Elegiste: ${advSurface}` : "Elige una opción"}
+            </small>
           </div>
-          <div className="finder-steps">
-            <button
-              onClick={() =>
-                setFinder((v) => [
-                  v[0] === "Muros y plafones" ? "Pisos" : "Muros y plafones",
-                  v[1],
-                  v[2],
-                ])
-              }
-            >
-              <b>1</b>
-              <span>
-                <small>Superficie</small>
-                {finder[0]}
-              </span>
-              <ChevronDown />
-            </button>
-            <button
-              onClick={() =>
-                setFinder((v) => [
-                  v[0],
-                  v[1] === "Interior" ? "Exterior" : "Interior",
-                  v[2],
-                ])
-              }
-            >
-              <b>2</b>
-              <span>
-                <small>Ubicación</small>
-                {finder[1]}
-              </span>
-              <ChevronDown />
-            </button>
-            <button
-              onClick={() =>
-                setFinder((v) => [
-                  v[0],
-                  v[1],
-                  v[2] === "Fácil de limpiar"
-                    ? "Alta resistencia"
-                    : "Fácil de limpiar",
-                ])
-              }
-            >
-              <b>3</b>
-              <span>
-                <small>Necesidad</small>
-                {finder[2]}
-              </span>
-              <ChevronDown />
-            </button>
-            <button
-              className="finder-submit"
-              onClick={() => {
-                setCategory(finder[0] === "Pisos" ? "Base agua" : "Todos");
-                document
-                  .querySelector("#productos")
-                  ?.scrollIntoView({ behavior: "smooth" });
-                notify("Recomendación actualizada");
-              }}
-            >
-              Ver recomendación <ArrowRight />
-            </button>
+
+          <div className="adv-q">
+            <div className="adv-label">
+              <b>2</b> ¿Dónde está?
+            </div>
+            <div className="adv-chips">
+              {["Interior", "Exterior"].map((o) => (
+                <button
+                  key={o}
+                  className={advLocation === o ? "adv-chip on" : "adv-chip"}
+                  onClick={() => setAdvLocation(o)}
+                >
+                  {o}
+                </button>
+              ))}
+            </div>
+            <small className={advLocation ? "adv-hint done" : "adv-hint"}>
+              {advLocation ? `Elegiste: ${advLocation}` : "Elige una opción"}
+            </small>
           </div>
+
+          <button
+            className="adv-submit"
+            onClick={recommend}
+            disabled={!advSurface || !advLocation}
+          >
+            Ver mi recomendación <ArrowRight />
+          </button>
+          {(!advSurface || !advLocation) && (
+            <p className="adv-note">
+              Responde las 2 preguntas para ver tu recomendación.
+            </p>
+          )}
         </section>
+
+        {advResult && (
+          <div
+            className="adv-backdrop"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) setAdvResult(null);
+            }}
+          >
+            <div className="adv-modal" role="dialog" aria-modal="true">
+              <span className="adv-grab" />
+              <div className="adv-mtop">
+                <span className="adv-mtag">Tu recomendación</span>
+                <button
+                  className="adv-x"
+                  onClick={() => setAdvResult(null)}
+                  aria-label="Cerrar"
+                >
+                  <X />
+                </button>
+              </div>
+              <div className="adv-prod">
+                <img
+                  src={advResult.p.image}
+                  alt={advResult.p.name}
+                  decoding="async"
+                />
+                <div>
+                  <div className="adv-cat">{advResult.p.category}</div>
+                  <h3>{advResult.p.name}</h3>
+                  <div className="adv-rate">
+                    <Star fill="currentColor" /> {advResult.p.rating} · verificado
+                  </div>
+                </div>
+              </div>
+              <div className="adv-reason">{advResult.reason}</div>
+              <div className="adv-macts">
+                <button
+                  className="white-button"
+                  onClick={() => setAdvResult(null)}
+                >
+                  Seguir viendo
+                </button>
+                <a className="red-button" href={`/producto/${advResult.p.slug}`}>
+                  Ver producto <ArrowRight />
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         <section id="productos" className="content-section products-section">
           <div className="section-title">
@@ -490,7 +550,7 @@ export default function Home() {
           {(query || category !== "Todos") && (
             <div className="query-note">
               {query ? `Resultados para “${query}”` : category} ·{" "}
-              {visible.length} productos{" "}
+              {visible.length} producto{visible.length === 1 ? "" : "s"}{" "}
               <button
                 onClick={() => {
                   setQuery("");
@@ -501,138 +561,70 @@ export default function Home() {
               </button>
             </div>
           )}
-          <div className="products-grid carousel" ref={carouselRef}>
-            {visible.map((p) => (
-              <article className="product-card" key={p.name}>
-                <div className="product-image">
-                  <span>{p.tag}</span>
-                  <button
-                    className={
-                      favorites.includes(p.name)
-                        ? "favorite active"
-                        : "favorite"
-                    }
-                    onClick={() => toggleFavorite(p.name)}
-                    aria-label={`Guardar ${p.name}`}
-                  >
-                    <Heart
-                      fill={
-                        favorites.includes(p.name) ? "currentColor" : "none"
-                      }
-                    />
-                  </button>
-                  <a
-                    href={`/producto/${p.slug}`}
-                    aria-label={`Ver detalles de ${p.name}`}
-                  >
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  </a>
-                </div>
-                <div className="product-copy">
-                  <small>{p.category}</small>
-                  <h3>
-                    <a href={`/producto/${p.slug}`}>{p.name}</a>
-                  </h3>
-                  <div className="stars">
-                    <Star fill="currentColor" /> {p.rating}{" "}
-                    <span>Producto verificado</span>
-                  </div>
-                  <div className="product-bottom">
-                    <div>
-                      {p.old && <del>{money(p.old)}</del>}
-                      <b>{money(p.from)}</b>
-                      {p.to && <small> – {money(p.to)}</small>}
-                    </div>
-                    <button
-                      onClick={() => addToCart()}
-                      aria-label={`Agregar ${p.name}`}
+          {visible.length ? (
+            <div className="products-grid carousel" ref={carouselRef}>
+              {visible.map((p) => (
+                <article className="product-card" key={p.slug}>
+                  <div className="product-image">
+                    <span>{p.tag}</span>
+                    <a
+                      href={`/producto/${p.slug}`}
+                      aria-label={`Ver detalles de ${p.name}`}
                     >
-                      <Plus />
-                    </button>
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    </a>
                   </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="featured-product">
-          <div className="featured-image">
-            <img
-              src="/berel/pisos.png"
-              alt="Pintura para Pisos Serie 3800"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <div className="featured-copy">
-            <p>PRODUCTO DESTACADO</p>
-            <h2>
-              Pintura para Pisos
-              <br />
-              Serie 3800
-            </h2>
-            <p className="desc">
-              Acabado satinado para proteger y decorar pisos de concreto y
-              mortero con tráfico peatonal y vehicular ligero.
-            </p>
-            <div className="chips">
-              <span>
-                <Check /> Interior y exterior
-              </span>
-              <span>
-                <Check /> Antideslizante
-              </span>
-              <span>
-                <Check /> Sin plomo
-              </span>
-              <span>
-                <Check /> 4–5 m²/L a dos manos
-              </span>
+                  <div className="product-copy">
+                    <small>{p.category}</small>
+                    <h3>
+                      <a href={`/producto/${p.slug}`}>{p.name}</a>
+                    </h3>
+                    <div className="stars">
+                      <Star fill="currentColor" /> {p.rating}{" "}
+                      <span>Producto verificado</span>
+                    </div>
+                    <div className="product-bottom">
+                      <div>
+                        {p.old && <del>{money(p.old)}</del>}
+                        <b>{money(p.from)}</b>
+                        {p.to && <small> – {money(p.to)}</small>}
+                      </div>
+                      <button
+                        onClick={() =>
+                          add({
+                            slug: p.slug,
+                            name: p.name,
+                            image: p.image,
+                            price: p.from,
+                          })
+                        }
+                        aria-label={`Agregar ${p.name}`}
+                      >
+                        <Plus />
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </div>
-            <div className="buy-row">
-              <label>
-                Medida
-                <select value={size} onChange={(e) => setSize(e.target.value)}>
-                  <option>4 L</option>
-                  <option>19 L</option>
-                </select>
-              </label>
-              <label>
-                Cantidad
-                <div className="qty">
-                  <button onClick={() => setQty(Math.max(1, qty - 1))}>
-                    <Minus />
-                  </button>
-                  <b>{qty}</b>
-                  <button onClick={() => setQty(qty + 1)}>
-                    <Plus />
-                  </button>
-                </div>
-              </label>
-            </div>
-            <div className="featured-price">
-              <div>
-                <small>Precio desde</small>
-                <b>{money(size === "19 L" ? 6319 : 1385)}</b>
-              </div>
-              <button className="red-button" onClick={() => addToCart(qty)}>
-                Añadir al carrito <ShoppingCart />
+          ) : (
+            <div className="query-note">
+              No encontramos productos para esta búsqueda.{" "}
+              <button
+                onClick={() => {
+                  setQuery("");
+                  setCategory("Todos");
+                }}
+              >
+                Ver todo
               </button>
             </div>
-            <div className="delivery">
-              <PackageCheck />
-              <span>
-                <b>Entrega gratuita</b>
-                <small>Disponible en CDMX y Estado de México</small>
-              </span>
-            </div>
-          </div>
+          )}
         </section>
 
         <section id="ayuda" className="service-grid">
@@ -677,9 +669,11 @@ export default function Home() {
           </div>
           <div>
             <h4>Compra</h4>
-            <a href="#productos">Tienda</a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/tienda/todos">Tienda</a>
             <a href="#categorias">Categorías</a>
-            <a href="#productos">Promociones</a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/tienda/promociones">Promociones</a>
           </div>
           <div>
             <h4>Ayuda</h4>
@@ -689,69 +683,17 @@ export default function Home() {
           </div>
           <div>
             <h4>Información</h4>
-            <a href="#inicio">Quiénes somos</a>
-            <a href="#inicio">Aviso de privacidad</a>
-            <a href="#inicio">Términos y condiciones</a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/nosotros">Quiénes somos</a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/privacidad">Aviso de privacidad</a>
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+            <a href="/terminos">Términos y condiciones</a>
           </div>
           <small className="copyright">
             © 2026 Berel México · Propuesta conceptual de rediseño
           </small>
         </footer>
-        <div
-          className={cartOpen ? "drawer-backdrop open" : "drawer-backdrop"}
-          onClick={() => setCartOpen(false)}
-        />
-        <aside
-          className={cartOpen ? "cart-drawer open" : "cart-drawer"}
-          aria-hidden={!cartOpen}
-        >
-          <div className="drawer-head">
-            <div>
-              <small>Tu compra</small>
-              <h3>Carrito ({cart})</h3>
-            </div>
-            <button
-              onClick={() => setCartOpen(false)}
-              aria-label="Cerrar carrito"
-            >
-              <X />
-            </button>
-          </div>
-          {cart ? (
-            <div className="drawer-item">
-              <img src="/berel/pisos.png" alt="Producto Berel" />
-              <div>
-                <b>Productos Berel</b>
-                <small>
-                  {cart} artículo{cart === 1 ? "" : "s"}
-                </small>
-              </div>
-              <button onClick={() => setCart(0)} aria-label="Vaciar carrito">
-                <Trash2 />
-              </button>
-            </div>
-          ) : (
-            <div className="empty-cart">
-              <ShoppingCart />
-              <h4>Tu carrito está vacío</h4>
-              <p>Explora los productos destacados y agrega tus favoritos.</p>
-            </div>
-          )}
-          <div className="drawer-footer">
-            <button
-              disabled={!cart}
-              onClick={() => notify("Checkout listo para conectar")}
-            >
-              Continuar compra <ArrowRight />
-            </button>
-          </div>
-        </aside>
-        {toast && (
-          <div className="toast" role="status">
-            <Check />
-            {toast}
-          </div>
-        )}
       </main>
     </>
   );

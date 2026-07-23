@@ -1,17 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Quicksand } from "next/font/google";
 import { headers } from "next/headers";
+import { CartProvider } from "@/lib/cart-context";
+import WhatsAppFloating from "@/components/WhatsAppFloating";
 import "./globals.css";
 import "./modern.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const quicksand = Quicksand({
+  variable: "--font-quicksand",
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -45,8 +43,8 @@ export async function generateMetadata(): Promise<Metadata> {
       images: [socialImage],
     },
     icons: {
-      icon: "/favicon.svg",
-      shortcut: "/favicon.svg",
+      icon: "/berel-icono.png",
+      shortcut: "/berel-icono.png",
     },
   };
 }
@@ -59,9 +57,12 @@ export default function RootLayout({
   return (
     <html lang="es-MX">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${quicksand.variable} antialiased`}
       >
-        {children}
+        <CartProvider>
+          {children}
+          <WhatsAppFloating />
+        </CartProvider>
       </body>
     </html>
   );

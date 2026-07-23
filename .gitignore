@@ -30,6 +30,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,3 +41,20 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# local Codex/browser artifacts
+/.codex-artifacts/
+/.codex-*.log
+
+# local deployment output and archives
+/deploy/
+/upload-log.txt
+/berel-sitio-estatico*.zip
+/berel-src*.tgz
+/zikaRiSE
+/ziS0XQ5Q
+/zihLKoFF
+/berel-icono.png
+
+# local deployment credentials
+/.env.deploy

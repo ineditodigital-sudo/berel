@@ -1,49 +1,81 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
-import { use, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { notFound } from "next/navigation";
 import {
   Check,
   Heart,
   Minus,
+  MessageCircle,
   Plus,
   ShieldCheck,
   ShoppingCart,
   Truck,
 } from "lucide-react";
 import StoreHeader from "@/components/StoreHeader";
-import { money, products } from "@/lib/store-data";
+import { cmsProductToStore, money, products, slugify, type CmsProductRow } from "@/lib/store-data";
+import { useCart } from "@/lib/cart-context";
 
 export default function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const [qty, setQty] = useState(1);
-  const [added, setAdded] = useState(false);
   const { slug } = use(params);
-  const p = products.find((item) => item.slug === slug);
+  const [catalogProducts, setCatalogProducts] = useState(products);
+  const p = catalogProducts.find((item) => item.slug === slug);
+  const { add, openCart, notify } = useCart();
+  const [qty, setQty] = useState(1);
+  const [size, setSize] = useState("4 L");
+  const [whatsapp, setWhatsapp] = useState("");
+
+  useEffect(() => {
+    fetch("/api/storefront")
+      .then((response) => response.json())
+      .then((data: { products?: CmsProductRow[]; settings?: { contact?: { whatsapp?: string } } }) => {
+        if (data.products?.length) setCatalogProducts(data.products.map(cmsProductToStore));
+        setWhatsapp(data.settings?.contact?.whatsapp?.replace(/\D/g, "") ?? "");
+      })
+      .catch(() => undefined);
+  }, []);
+
+  const presentations = useMemo(
+    () => [
+      { label: "4 L", price: p?.from ?? 0 },
+      { label: "19 L", price: p?.to ?? p?.from ?? 0 },
+    ],
+    [p],
+  );
   if (!p) return notFound();
+
+  const price =
+    presentations.find((option) => option.label === size)?.price ?? p.from;
+
   return (
     <main id="main-content">
       <StoreHeader />
       <div className="breadcrumbs">
         <a href="/">Inicio</a> /{" "}
-        <a href={`/tienda/${p.category.toLowerCase()}`}>{p.category}</a> /{" "}
-        {p.name}
+        <a href={`/tienda/${slugify(p.category)}`}>{p.category}</a> / {p.name}
       </div>
       <section className="product-detail">
         <div className="product-gallery">
           <span>{p.tag}</span>
           <img src={p.image} alt={p.name} />
           <div className="gallery-thumbs">
-            <button className="active">
+            <button className="active" aria-label="Vista frontal">
               <img src={p.image} alt="Vista frontal" />
             </button>
-            <button>
+            <button aria-label="Vista de presentación">
               <img src={p.image} alt="Vista de presentación" />
             </button>
-            <button className="tech-thumb">
+            <button
+              className="tech-thumb"
+              onClick={() => {
+                if (p.technicalSheetUrl) window.open(p.technicalSheetUrl, "_blank");
+                else notify("Ficha técnica disponible próximamente");
+              }}
+            >
               Ficha
               <br />
               técnica
@@ -67,37 +99,68 @@ export default function ProductPage({
           </div>
           <label>
             Presentación
-            <select>
-              <option>4 L</option>
-              <option>19 L</option>
+            <select value={size} onChange={(e) => setSize(e.target.value)}>
+              {presentations.map((option) => (
+                <option key={option.label}>{option.label}</option>
+              ))}
             </select>
           </label>
           <div className="detail-price">
             <div>
-              <small>Precio desde</small>
-              <b>{money(p.from)}</b>
+              <small>Precio {size}</small>
+              <b>{money(price)}</b>
             </div>
             <div className="qty">
-              <button onClick={() => setQty(Math.max(1, qty - 1))}>
+              <button
+                onClick={() => setQty(Math.max(1, qty - 1))}
+                aria-label="Disminuir cantidad"
+              >
                 <Minus />
               </button>
               <b>{qty}</b>
-              <button onClick={() => setQty(qty + 1)}>
+              <button
+                onClick={() => setQty(qty + 1)}
+                aria-label="Aumentar cantidad"
+              >
                 <Plus />
               </button>
             </div>
           </div>
-          <button className="detail-add" onClick={() => setAdded(true)}>
-            {added ? <Check /> : <ShoppingCart />}
-            {added ? "Agregado al carrito" : "Añadir al carrito"}
+          <button
+            className="detail-add"
+            onClick={() => {
+              add(
+                {
+                  slug: p.slug,
+                  name: p.name,
+                  image: p.image,
+                  price,
+                  presentation: size,
+                },
+                qty,
+              );
+              openCart();
+            }}
+          >
+            <ShoppingCart />
+            Añadir al carrito
           </button>
-          <button className="detail-favorite">
-            <Heart /> Guardar en favoritos
-          </button>
+          {whatsapp && (
+            <a
+              className="detail-whatsapp"
+              href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(
+                p.whatsappMessage || `Hola, me gustaría más información sobre ${p.name}.`,
+              )}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <MessageCircle /> Solicitar información por WhatsApp
+            </a>
+          )}
           <div className="detail-trust">
             <span>
               <Truck />
-              Envío gratis desde $999
+              Envío gratis · compra mínima $800
             </span>
             <span>
               <ShieldCheck />
@@ -153,7 +216,7 @@ export default function ProductPage({
           <h2>También te puede interesar</h2>
         </div>
         <div>
-          {products
+          {catalogProducts
             .filter((item) => item.slug !== p.slug)
             .slice(0, 3)
             .map((item) => (
