@@ -37,6 +37,7 @@ yarn-error.log*
 
 # typescript
 next-env.d.ts
+tsconfig.tsbuildinfo
 /dist/
 /.wrangler/
 /outputs/
@@ -44,12 +45,14 @@ next-env.d.ts
 
 # local Codex/browser artifacts
 /.codex-artifacts/
+/.codex-remote-attachments/
 /.codex-*.log
 
 # local deployment output and archives
 /deploy/
 /upload-log.txt
 /berel-sitio-estatico*.zip
+/berel-cpanel-php-*.zip
 /berel-src*.tgz
 /zikaRiSE
 /ziS0XQ5Q

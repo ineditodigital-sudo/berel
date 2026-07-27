@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import StoreHeader from "@/components/StoreHeader";
+import StoreFooter from "@/components/StoreFooter";
 
 export const metadata = {
   title: "Quiénes somos | Berel México",
@@ -31,9 +32,9 @@ export default function AboutPage() {
         <div className="info-block">
           <h2>Por qué elegirnos</h2>
           <p>
-            Combinamos calidad probada, cobertura de entrega en CDMX y Estado de
-            México, y un equipo listo para ayudarte a elegir el producto
-            correcto para tu proyecto.
+            Combinamos calidad probada, entrega local en Aguascalientes y un
+            equipo listo para ayudarte a elegir el producto correcto para tu
+            proyecto.
           </p>
         </div>
 
@@ -41,6 +42,7 @@ export default function AboutPage() {
           ← Volver a la tienda
         </a>
       </section>
+      <StoreFooter />
     </main>
   );
 }

@@ -1,0 +1,32 @@
+<?php
+declare(strict_types=1);
+require __DIR__ . '/src/bootstrap.php';
+$route=trim((string)($_GET['route']??''),'/');
+$commerce=setting($db,'commerce',['minimumOrderCents'=>80000,'deliveryPromiseHours'=>24]);
+$contact=setting($db,'contact',['whatsapp'=>'','phone'=>'']);
+$categories=$db->query('SELECT * FROM categories WHERE is_active=1 ORDER BY sort_order,name')->fetchAll();
+$slides=$db->query('SELECT * FROM carousel_slides WHERE is_active=1 ORDER BY sort_order')->fetchAll();
+$products=$db->query("SELECT p.*,c.name category_name,c.slug category_slug FROM products p LEFT JOIN categories c ON c.id=p.category_id WHERE p.is_active=1 ORDER BY p.is_featured DESC,p.name")->fetchAll();
+$selected=null;
+if(str_starts_with($route,'producto/')){foreach($products as $p){if($p['slug']===substr($route,9)){$selected=$p;break;}}}
+$category=str_starts_with($route,'tienda/')?substr($route,7):'todos';
+if($category!=='todos')$products=array_values(array_filter($products,fn($p)=>$p['category_slug']===$category));
+?>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title><?=e($selected?$selected['name']:'Berel México | Pinturas e impermeabilizantes')?></title>
+<meta name="description" content="Productos Berel en Aguascalientes con entrega local y retiro en sucursal.">
+<link rel="stylesheet" href="/assets/app.css"><link rel="stylesheet" href="/assets/store.css"></head>
+<body>
+<header class="store-head"><a href="/" class="store-logo"><img src="/assets/img/berel-icono.png" alt="Berel"><span>Berel México</span></a><nav><a href="/tienda/todos">Productos</a><a href="/#categorias">Categorías</a><a href="/#contacto">Contacto</a></nav><button id="cart-button">Carrito <b id="cart-count">0</b></button></header>
+<?php if($selected): ?>
+<main class="product-detail"><div class="detail-image"><img src="<?=e($selected['image_url']?:'/assets/img/berel-icono.png')?>" alt="<?=e($selected['name'])?>"></div><div class="detail-copy"><p class="eyebrow"><?=e($selected['category_name'])?></p><h1><?=e($selected['name'])?></h1><p><?=e($selected['description'])?></p><strong><?=money($selected['price_cents'])?> MXN</strong><span><?=intval($selected['stock'])?> disponibles</span><button class="button primary add-cart" data-slug="<?=e($selected['slug'])?>" data-name="<?=e($selected['name'])?>" data-price="<?=intval($selected['price_cents'])?>">Agregar al carrito</button><?php if($contact['whatsapp']):?><a class="button whatsapp" target="_blank" href="https://wa.me/<?=e(preg_replace('/\D/','',$contact['whatsapp']))?>?text=<?=urlencode($selected['whatsapp_message']?:'Hola, me gustaría más información sobre '.$selected['name'])?>">Consultar por WhatsApp</a><?php endif;?></div></main>
+<?php else: ?>
+<?php if(!$route && $slides):$slide=$slides[0];?><section class="store-hero"><img src="<?=e($slide['image_url'])?>" alt=""><div><p><?=e($slide['eyebrow'])?></p><h1><?=e($slide['title'])?></h1><span><?=e($slide['body'])?></span><a class="button primary" href="<?=e($slide['button_url']?:'/tienda/todos')?>"><?=e($slide['button_label']?:'Comprar ahora')?></a></div></section><?php endif;?>
+<main class="store-main"><section id="categorias"><p class="eyebrow">COMPRA POR CATEGORÍA</p><h2>Encuentra lo que necesitas</h2><div class="category-list"><?php foreach($categories as $c):?><a href="/tienda/<?=e($c['slug'])?>"><span><?=e($c['name'])?></span><b>Ver productos →</b></a><?php endforeach;?></div></section>
+<section><p class="eyebrow">CATÁLOGO BEREL</p><h2><?=e($category==='todos'?'Todos los productos':ucwords(str_replace('-',' ',$category)))?></h2><div class="store-products"><?php foreach($products as $p):?><article><a class="store-product-image" href="/producto/<?=e($p['slug'])?>"><img src="<?=e($p['image_url']?:'/assets/img/berel-icono.png')?>" alt="<?=e($p['name'])?>"><small><?=intval($p['stock'])?> disponibles</small></a><div><span><?=e($p['category_name'])?></span><h3><a href="/producto/<?=e($p['slug'])?>"><?=e($p['name'])?></a></h3><strong><?=money($p['price_cents'])?></strong></div><footer><a href="/producto/<?=e($p['slug'])?>">Ver producto</a><button class="add-cart" data-slug="<?=e($p['slug'])?>" data-name="<?=e($p['name'])?>" data-price="<?=intval($p['price_cents'])?>">Agregar</button></footer></article><?php endforeach;?></div></section></main>
+<?php endif;?>
+<footer class="store-footer" id="contacto"><img src="/assets/img/berel-icono.png" alt="Berel"><p>Compra mínima <?=money($commerce['minimumOrderCents'])?> · Entrega en Aguascalientes en máximo <?=intval($commerce['deliveryPromiseHours'])?> horas.</p><a href="/admin">Administración</a></footer>
+<aside class="cart-drawer" id="cart"><header><h2>Tu carrito</h2><button id="cart-close">×</button></header><div id="cart-items"></div><footer><strong>Total: <span id="cart-total">$0.00</span></strong><button class="button primary" id="checkout">Finalizar compra</button></footer></aside><div class="cart-overlay" id="cart-overlay"></div>
+<dialog class="editor-dialog" id="checkout-dialog"><form id="checkout-form"><header><div><p class="eyebrow">FINALIZAR COMPRA</p><h2>Datos de tu pedido</h2><span>Entrega gratuita en Aguascalientes o retiro en sucursal.</span></div><button class="icon-button" type="button" data-close-checkout>×</button></header><section class="editor-fields"><label><span>Nombre completo</span><input name="customerName" required></label><label><span>Correo</span><input type="email" name="customerEmail" required></label><label><span>Teléfono</span><input name="customerPhone" required></label><label><span>Forma de entrega</span><select name="fulfillmentType"><option value="delivery">Envío en Aguascalientes</option><option value="pickup">Retiro en sucursal</option></select></label><label class="wide"><span>Calle, número y colonia</span><input name="street"></label><label><span>Estado</span><input name="state" value="Aguascalientes"></label><label class="wide"><span>Notas</span><textarea name="notes"></textarea></label></section><footer><button type="button" class="button secondary" data-close-checkout>Cancelar</button><button class="button primary" type="submit">Crear pedido</button></footer></form></dialog>
+<?php if($contact['whatsapp']):?><a class="whatsapp-float" target="_blank" aria-label="WhatsApp" href="https://wa.me/<?=e(preg_replace('/\D/','',$contact['whatsapp']))?>">WA</a><?php endif;?>
+<script>window.BEREL_COMMERCE=<?=json_encode($commerce,JSON_UNESCAPED_UNICODE)?>;</script><script src="/assets/store.js" defer></script></body></html>

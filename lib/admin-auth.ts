@@ -9,11 +9,21 @@ function allowedEmails(): string[] {
   return configured?.length ? configured : DEFAULT_ADMIN_EMAILS;
 }
 
+/**
+ * Omite la autenticación del CMS solo en desarrollo local y solo si se pide
+ * explícitamente. Se exigen las dos condiciones a propósito: si `ADMIN_PREVIEW`
+ * se filtrara a producción, `NODE_ENV` seguiría siendo "production" y el CMS
+ * continuaría protegido.
+ */
+function isLocalPreview(): boolean {
+  return (
+    process.env.ADMIN_PREVIEW === "true" &&
+    process.env.NODE_ENV === "development"
+  );
+}
+
 export async function requireAdminPage(returnTo = "/admin") {
-  if (
-    process.env.NODE_ENV !== "production" &&
-    process.env.ADMIN_PREVIEW === "true"
-  ) {
+  if (isLocalPreview()) {
     return {
       displayName: "Equipo Berel",
       email: DEFAULT_ADMIN_EMAILS[0],
@@ -30,10 +40,7 @@ export async function requireAdminPage(returnTo = "/admin") {
 export async function requireAdminApi(): Promise<
   { ok: true; email: string } | { ok: false; response: Response }
 > {
-  if (
-    process.env.NODE_ENV !== "production" &&
-    process.env.ADMIN_PREVIEW === "true"
-  ) {
+  if (isLocalPreview()) {
     return { ok: true, email: DEFAULT_ADMIN_EMAILS[0] };
   }
   const user = await getChatGPTUser();

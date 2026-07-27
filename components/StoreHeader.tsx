@@ -3,17 +3,41 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDown, Menu, ShoppingCart, X } from "lucide-react";
-import { menuPages, slugify } from "@/lib/store-data";
+import {
+  loadStorefront,
+  reportStorefrontError,
+  type StorefrontCategory,
+} from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
+
+// El CMS puede tener decenas de categorías activas; en la barra principal solo
+// caben las primeras por `sort_order`. El resto se alcanza desde "Todos los
+// productos" y desde el filtro lateral del catálogo.
+const NAV_CATEGORY_LIMIT = 8;
 
 export default function StoreHeader() {
   const [open, setOpen] = useState(false);
+  const [categories, setCategories] = useState<StorefrontCategory[]>([]);
   const { count: cartCount, openCart } = useCart();
 
   useEffect(() => {
     document.body.classList.toggle("mobile-menu-open", open);
     return () => document.body.classList.remove("mobile-menu-open");
   }, [open]);
+
+  // El menú refleja las categorías activas del CMS; no hay lista de respaldo.
+  useEffect(() => {
+    let active = true;
+    loadStorefront().then(
+      (data) => {
+        if (active) setCategories(data.categories.slice(0, NAV_CATEGORY_LIMIT));
+      },
+      (error: unknown) => reportStorefrontError(error),
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <header className="store-header">
@@ -54,16 +78,22 @@ export default function StoreHeader() {
         >
           <Menu size={18} /> Todos los productos <ChevronDown size={15} />
         </a>
-        {menuPages.map((name) => (
+        {categories.map((category) => (
           <a
-            className={name === "Promociones" ? "sale" : ""}
-            href={`/tienda/${slugify(name)}`}
-            key={name}
+            href={`/tienda/${category.slug}`}
+            key={category.id ?? category.slug}
             onClick={() => setOpen(false)}
           >
-            {name}
+            {category.name}
           </a>
         ))}
+        <a
+          className="sale"
+          href="/tienda/promociones"
+          onClick={() => setOpen(false)}
+        >
+          Promociones
+        </a>
         <a href="/#asesoria" onClick={() => setOpen(false)}>
           Encuentra tu producto
         </a>

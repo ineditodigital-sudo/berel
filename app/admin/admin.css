@@ -89,7 +89,7 @@ button{cursor:pointer}
 .resource-card-body>p{font-size:10px;color:var(--cms-muted);margin:5px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .resource-card-body>.card-excerpt{white-space:normal;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;line-height:1.55;overflow:hidden;margin-top:9px}
 .resource-card strong{font-size:20px;line-height:1.2;margin-top:18px}
-.resource-card>footer{display:flex;align-items:center;padding:0 20px 20px;margin-top:auto}
+.resource-card>footer{display:flex;align-items:center;padding:0 20px 20px;margin-top:auto;background:#fff;border-radius:0}
 .resource-card>footer button{width:100%;min-height:46px;padding:0 2px;border:0;border-top:1px solid #e6e8eb;border-radius:0;background:transparent;color:#59616d;display:flex;align-items:center;gap:9px;font-size:11px;font-weight:750;text-align:left;transition:color .2s ease,background .2s ease}
 .resource-card>footer button:hover{color:#17191d;background:#fafafa}
 .resource-card>footer button:focus-visible{outline:3px solid #9abcf7;outline-offset:3px}

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import StoreHeader from "@/components/StoreHeader";
+import StoreFooter from "@/components/StoreFooter";
 
 export const metadata = {
   title: "Términos y condiciones | Berel México",
@@ -30,8 +31,9 @@ export default function TermsPage() {
         <div className="info-block">
           <h2>Envíos</h2>
           <p>
-            Envío gratis en compras desde $999 con cobertura en CDMX y Estado de
-            México. Los tiempos de entrega se confirman al finalizar la compra.
+            Envío gratis dentro del estado de Aguascalientes al alcanzar la
+            compra mínima vigente, que se indica en el carrito y al finalizar la
+            compra. También puedes elegir retiro en sucursal.
           </p>
         </div>
         <div className="info-block">
@@ -51,6 +53,7 @@ export default function TermsPage() {
           ← Volver a la tienda
         </a>
       </section>
+      <StoreFooter />
     </main>
   );
 }

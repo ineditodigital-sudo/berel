@@ -2,16 +2,23 @@
 
 import { MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import { loadStorefront, reportStorefrontError } from "@/lib/storefront-client";
 
 export default function WhatsAppFloating() {
   const [number, setNumber] = useState("");
   useEffect(() => {
-    fetch("/api/storefront")
-      .then((response) => response.json())
-      .then((data: { settings?: { contact?: { whatsapp?: string } } }) =>
-        setNumber(data.settings?.contact?.whatsapp?.replace(/\D/g, "") ?? ""),
-      )
-      .catch(() => undefined);
+    let active = true;
+    loadStorefront().then(
+      (data) => {
+        if (active) {
+          setNumber(data.settings.contact?.whatsapp?.replace(/\D/g, "") ?? "");
+        }
+      },
+      (error: unknown) => reportStorefrontError(error),
+    );
+    return () => {
+      active = false;
+    };
   }, []);
   if (!number) return null;
   const message = encodeURIComponent(

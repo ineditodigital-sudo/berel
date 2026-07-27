@@ -1,0 +1,9 @@
+.store-footer .footer-logo img{
+  width:76px;
+  height:58px;
+  object-fit:contain;
+  object-position:left center;
+  filter:brightness(0) invert(1);
+}
+
+.store-footer .footer-logo small{margin-top:6px}

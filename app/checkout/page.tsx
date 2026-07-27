@@ -5,27 +5,38 @@ import Link from "next/link";
 import { ArrowLeft, Check, MapPin, PackageCheck, ShieldCheck, Truck } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { money } from "@/lib/store-data";
+import {
+  loadStorefront,
+  reportStorefrontError,
+  type StorefrontBranch,
+  type StorefrontSettings,
+} from "@/lib/storefront-client";
+import StoreFooter from "@/components/StoreFooter";
 import "./checkout.css";
 
-type Branch = { id: string; name: string; address: string };
-type Commerce = { minimumOrderCents?: number; deliveryPromiseHours?: number };
+type Commerce = NonNullable<StorefrontSettings["commerce"]>;
 
 export default function CheckoutPage() {
   const { items, total, clear } = useCart();
   const [fulfillment, setFulfillment] = useState<"delivery" | "pickup">("delivery");
-  const [branches, setBranches] = useState<Branch[]>([]);
+  const [branches, setBranches] = useState<StorefrontBranch[]>([]);
   const [commerce, setCommerce] = useState<Commerce>({ minimumOrderCents: 80000, deliveryPromiseHours: 24 });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetch("/api/storefront")
-      .then((response) => response.json())
-      .then((data: { branches?: Branch[]; settings?: { commerce?: Commerce } }) => {
-        setBranches(data.branches ?? []);
-        setCommerce((current) => data.settings?.commerce ?? current);
-      })
-      .catch(() => undefined);
+    let active = true;
+    loadStorefront().then(
+      (data) => {
+        if (!active) return;
+        setBranches(data.branches);
+        setCommerce((current) => data.settings.commerce ?? current);
+      },
+      (error: unknown) => reportStorefrontError(error),
+    );
+    return () => {
+      active = false;
+    };
   }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -43,8 +54,9 @@ export default function CheckoutPage() {
         street: form.get("street"),
         neighborhood: form.get("neighborhood"),
         postalCode: form.get("postalCode"),
-        city: "Aguascalientes",
-        state: "Aguascalientes",
+        // El backend valida el estado contra commerce.deliveryState.
+        city: commerce.deliveryState ?? "Aguascalientes",
+        state: commerce.deliveryState ?? "Aguascalientes",
         references: form.get("references"),
       },
       notes: form.get("notes"),
@@ -96,6 +108,7 @@ export default function CheckoutPage() {
         </section>
         <aside><h2>Resumen</h2>{items.map((item) => <article key={`${item.slug}-${item.presentation}`}><img src={item.image} alt="" /><div><b>{item.name}</b><small>{item.qty} × {money(item.price)}</small></div><strong>{money(item.qty * item.price)}</strong></article>)}<div className="checkout-totals"><span>Subtotal<b>{money(total)}</b></span><span>Envío<b>Gratis</b></span><span className="grand">Total<b>{money(total)}</b></span></div><p><ShieldCheck /> Tus datos y el pago se procesan de forma segura.</p></aside>
       </div>
+      <StoreFooter />
     </main>
   );
 }

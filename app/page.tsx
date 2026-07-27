@@ -21,75 +21,67 @@ import {
   X,
 } from "lucide-react";
 import StoreHeader from "@/components/StoreHeader";
-import { cmsProductToStore, money, products, type CmsProductRow } from "@/lib/store-data";
+import { money, type Product } from "@/lib/store-data";
+import {
+  loadStorefront,
+  reportStorefrontError,
+  type StorefrontCategory,
+  type StorefrontFaq,
+  type StorefrontSettings,
+  type StorefrontSlide,
+} from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
 
-const categoryCards = [
-  { name: "Pinturas", image: "/berel/playa.png", color: "#e83338" },
-  { name: "Impermeabilizantes", image: "/berel/imper.png", color: "#178cc4" },
-  { name: "Esmaltes", image: "/berel/summa.png", color: "#f3b51b" },
-  { name: "Selladores", image: "/berel/salitre.png", color: "#323f9c" },
-];
-
-const heroSlides = [
-  {
-    eyebrow: "TIENDA OFICIAL BEREL MÉXICO",
-    title: "Todo para pintar, proteger y renovar.",
-    copy: "Productos originales, asesoría especializada y entrega directa.",
-    image: "/hero-modern-berel.webp",
-    theme: "yellow",
-  },
-  {
-    eyebrow: "PROTECCIÓN TODO EL AÑO",
-    title: "Que la lluvia no detenga tus proyectos.",
-    copy: "Impermeabilizantes de alto desempeño para cuidar tu hogar.",
-    image: "/hero-impermeabilizante-v2.webp",
-    theme: "blue",
-  },
-  {
-    eyebrow: "COLOR PARA EXTERIORES",
-    title: "Fachadas que resisten y se ven increíbles.",
-    copy: "Recubrimientos diseñados para sol, humedad y ambientes exigentes.",
-    image: "/hero-exteriores-v2.webp",
-    theme: "red",
-  },
-];
-
-const FEATURED_SLUG = "pintura-pisos-3800";
+// Paleta de presentación de las tarjetas de categoría. Es estilo, no
+// contenido: los nombres, imágenes y campañas vienen del CMS.
+const CATEGORY_COLORS = ["#e83338", "#178cc4", "#f3b51b", "#323f9c"];
+const CATEGORY_CARD_LIMIT = 4;
 
 export default function Home() {
-  const { add } = useCart();
-  const [catalogProducts, setCatalogProducts] = useState(products);
+  const { add, notify } = useCart();
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
+  const [cmsCategories, setCmsCategories] = useState<StorefrontCategory[]>([]);
+  const [heroSlides, setHeroSlides] = useState<StorefrontSlide[]>([]);
+  const [faqs, setFaqs] = useState<StorefrontFaq[]>([]);
+  const [settings, setSettings] = useState<StorefrontSettings>({});
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const [advSurface, setAdvSurface] = useState("");
   const [advLocation, setAdvLocation] = useState("");
   const [advResult, setAdvResult] = useState<
-    { p: (typeof products)[number]; reason: string } | null
+    { p: Product; reason: string } | null
   >(null);
   const recommend = useCallback(() => {
-    const find = (s: string) =>
-      catalogProducts.find((p) => p.slug === s) ??
-      products.find((p) => p.slug === s)!;
+    // Se prefiere un producto concreto del catálogo publicado; si el CMS ya no
+    // lo tiene, se busca por palabra clave dentro de lo que sí está publicado.
+    const find = (slug: string, keyword: string) =>
+      catalogProducts.find((p) => p.slug === slug) ??
+      catalogProducts.find((p) =>
+        `${p.category} ${p.name}`.toLowerCase().includes(keyword),
+      );
     let p, reason;
     if (advSurface === "Pisos") {
-      p = find("pintura-pisos-3800");
+      p = find("pintura-pisos-3800", "piso");
       reason = "Para pisos de concreto: acabado satinado, antiderrapante y resistente al tráfico.";
     } else if (advSurface === "Techo o azotea") {
-      p = find("impermeabilizante-acrilico");
+      p = find("impermeabilizante-acrilico", "impermeabilizante");
       reason = "Para techos y azoteas: sella filtraciones y resiste sol y lluvia.";
     } else if (advSurface === "Madera") {
-      p = find("barniz-maderas");
+      p = find("barniz-maderas", "madera");
       reason = "Para madera: realza la veta natural y protege de la humedad.";
     } else if (advLocation === "Exterior") {
-      p = find("berelex-playa");
+      p = find("berelex-playa", "exterior");
       reason = "Para muros exteriores: resiste sol, humedad y clima exigente sin decolorarse.";
     } else {
-      p = find("sellador-anti-salitre-530");
+      p = find("sellador-anti-salitre-530", "sellador");
       reason = "Ideal para preparar y proteger muros interiores contra la humedad y el salitre.";
     }
+    if (!p) {
+      notify("Todavía no hay un producto publicado para esa combinación.");
+      return;
+    }
     setAdvResult({ p, reason });
-  }, [advSurface, advLocation, catalogProducts]);
+  }, [advSurface, advLocation, catalogProducts, notify]);
   const [hero, setHero] = useState(0);
   const [heroManuallyPaused, setHeroManuallyPaused] = useState(false);
   const [heroInteractionPaused, setHeroInteractionPaused] = useState(false);
@@ -107,16 +99,55 @@ export default function Home() {
     [query, category, catalogProducts],
   );
 
+  // Catálogo, categorías y campañas salen del CMS. No hay contenido de respaldo:
+  // si esto falla, la home se muestra vacía y el error queda en consola.
   useEffect(() => {
-    fetch("/api/storefront")
-      .then((response) => response.json())
-      .then((data: { products?: CmsProductRow[] }) => {
-        if (data.products?.length) {
-          setCatalogProducts(data.products.map(cmsProductToStore));
-        }
-      })
-      .catch(() => undefined);
+    let active = true;
+    loadStorefront().then(
+      (data) => {
+        if (!active) return;
+        setCatalogProducts(data.products);
+        setCmsCategories(data.categories);
+        setHeroSlides(data.slides);
+        setFaqs(data.faqs);
+        setSettings(data.settings);
+      },
+      (error: unknown) => reportStorefrontError(error),
+    );
+    return () => {
+      active = false;
+    };
   }, []);
+
+  // Condiciones comerciales: se muestran las del CMS, nunca un texto fijo que
+  // pueda contradecir lo que el negocio tiene configurado.
+  const deliveryState = settings.commerce?.deliveryState;
+  const minimumOrder = settings.commerce?.minimumOrderCents;
+
+  const categoryCards = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const product of catalogProducts) {
+      counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+    }
+    return cmsCategories
+      .map((item) => ({
+        name: item.name,
+        count: counts.get(item.name) ?? 0,
+        image:
+          item.image_url ||
+          catalogProducts.find((product) => product.category === item.name)
+            ?.image ||
+          "/berel-icono.png",
+      }))
+      .filter((item) => item.count > 0)
+      .slice(0, CATEGORY_CARD_LIMIT)
+      .map((item, index) => ({
+        ...item,
+        color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+      }));
+  }, [cmsCategories, catalogProducts]);
+
+  const activeSlide = heroSlides[hero];
 
   const goToProducts = useCallback(() => {
     document
@@ -194,13 +225,14 @@ export default function Home() {
     const reducedMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
-    if (heroPaused || reducedMotion) return;
+    const slideCount = heroSlides.length;
+    if (heroPaused || reducedMotion || slideCount < 2) return;
     const slider = window.setInterval(
-      () => setHero((value) => (value + 1) % heroSlides.length),
+      () => setHero((value) => (value + 1) % slideCount),
       6000,
     );
     return () => clearInterval(slider);
-  }, [heroPaused]);
+  }, [heroPaused, heroSlides.length]);
   useEffect(() => {
     const el = carouselRef.current;
     if (!el) return;
@@ -262,7 +294,7 @@ export default function Home() {
       )}
       <main id="main-content" className="home-shell">
         <div className="utility">
-          <span>Envíos en CDMX y Edo. Méx.</span>
+          <span>{deliveryState ? `Envíos en ${deliveryState}` : ""}</span>
           <div>
             <a href="#ayuda">Preguntas frecuentes</a>
             <a href="#contacto">Contacto</a>
@@ -274,7 +306,12 @@ export default function Home() {
 
         <section className="trustbar">
           <span>
-            <Truck /> Envío gratis <small>en compras desde $999</small>
+            <Truck /> Envío gratis{" "}
+            <small>
+              {minimumOrder
+                ? `en compras desde ${money(minimumOrder / 100)}`
+                : "en tu zona de entrega"}
+            </small>
           </span>
           <span>
             <Headphones /> Asesoría en línea <small>para elegir mejor</small>
@@ -284,92 +321,100 @@ export default function Home() {
           </span>
         </section>
 
-        <section
-          id="inicio"
-          className={`hero-carousel theme-${heroSlides[hero].theme}`}
-          aria-roledescription="carrusel"
-          aria-label="Campañas destacadas"
-          onMouseEnter={() => setHeroInteractionPaused(true)}
-          onMouseLeave={() => setHeroInteractionPaused(false)}
-          onFocusCapture={() => setHeroInteractionPaused(true)}
-          onBlurCapture={() => setHeroInteractionPaused(false)}
-        >
-          <div
-            className="hero-track"
-            style={{ transform: `translateX(-${hero * 100}%)` }}
+        {activeSlide && (
+          <section
+            id="inicio"
+            className={`hero-carousel theme-${activeSlide.theme}`}
+            aria-roledescription="carrusel"
+            aria-label="Campañas destacadas"
+            onMouseEnter={() => setHeroInteractionPaused(true)}
+            onMouseLeave={() => setHeroInteractionPaused(false)}
+            onFocusCapture={() => setHeroInteractionPaused(true)}
+            onBlurCapture={() => setHeroInteractionPaused(false)}
           >
-            {heroSlides.map((slide, index) => (
-              <article
-                className="hero-slide"
-                key={slide.title}
-                aria-hidden={index !== hero}
-                inert={index !== hero}
-              >
-                <div className="hero-panel">
-                  <p>{slide.eyebrow}</p>
-                  <h1>{slide.title}</h1>
-                  <span>{slide.copy}</span>
-                  <div>
-                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-                    <a className="red-button" href="/tienda/todos">
-                      Comprar ahora <ArrowRight />
-                    </a>
-                    <a className="white-button" href="#asesoria">
-                      Ayúdame a elegir
-                    </a>
-                  </div>
-                </div>
-                <div className="hero-product">
-                  <img
-                    src={slide.image}
-                    alt={slide.title}
-                    fetchPriority={index === 0 ? "high" : undefined}
-                    loading={index === 0 ? undefined : "lazy"}
-                    decoding="async"
-                  />
-                </div>
-              </article>
-            ))}
-          </div>
-          <button
-            className="hero-arrow prev"
-            onClick={() =>
-              setHero((hero - 1 + heroSlides.length) % heroSlides.length)
-            }
-            aria-label="Campaña anterior"
-          >
-            <ChevronLeft />
-          </button>
-          <button
-            className="hero-arrow next"
-            onClick={() => setHero((hero + 1) % heroSlides.length)}
-            aria-label="Campaña siguiente"
-          >
-            <ChevronRight />
-          </button>
-          <div className="hero-dots">
-            {heroSlides.map((_, i) => (
-              <button
-                className={i === hero ? "active" : ""}
-                onClick={() => setHero(i)}
-                aria-label={`Ver campaña ${i + 1}`}
-                key={i}
-              />
-            ))}
-            <button
-              className="hero-pause"
-              onClick={() => setHeroManuallyPaused((value) => !value)}
-              aria-pressed={heroManuallyPaused}
-              aria-label={
-                heroManuallyPaused
-                  ? "Reanudar rotación del carrusel"
-                  : "Pausar rotación del carrusel"
-              }
+            <div
+              className="hero-track"
+              style={{ transform: `translateX(-${hero * 100}%)` }}
             >
-              {heroManuallyPaused ? <Play /> : <Pause />}
-            </button>
-          </div>
-        </section>
+              {heroSlides.map((slide, index) => (
+                <article
+                  className="hero-slide"
+                  key={slide.id}
+                  aria-hidden={index !== hero}
+                  inert={index !== hero}
+                >
+                  <div className="hero-panel">
+                    <p>{slide.eyebrow}</p>
+                    <h1>{slide.title}</h1>
+                    <span>{slide.body}</span>
+                    <div>
+                      <a
+                        className="red-button"
+                        href={slide.button_url || "/tienda/todos"}
+                      >
+                        {slide.button_label || "Comprar ahora"} <ArrowRight />
+                      </a>
+                      <a className="white-button" href="#asesoria">
+                        Ayúdame a elegir
+                      </a>
+                    </div>
+                  </div>
+                  <div className="hero-product">
+                    <img
+                      src={slide.image_url}
+                      alt={slide.title}
+                      fetchPriority={index === 0 ? "high" : undefined}
+                      loading={index === 0 ? undefined : "lazy"}
+                      decoding="async"
+                    />
+                  </div>
+                </article>
+              ))}
+            </div>
+            {heroSlides.length > 1 && (
+              <>
+                <button
+                  className="hero-arrow prev"
+                  onClick={() =>
+                    setHero((hero - 1 + heroSlides.length) % heroSlides.length)
+                  }
+                  aria-label="Campaña anterior"
+                >
+                  <ChevronLeft />
+                </button>
+                <button
+                  className="hero-arrow next"
+                  onClick={() => setHero((hero + 1) % heroSlides.length)}
+                  aria-label="Campaña siguiente"
+                >
+                  <ChevronRight />
+                </button>
+                <div className="hero-dots">
+                  {heroSlides.map((slide, i) => (
+                    <button
+                      className={i === hero ? "active" : ""}
+                      onClick={() => setHero(i)}
+                      aria-label={`Ver campaña ${i + 1}`}
+                      key={slide.id}
+                    />
+                  ))}
+                  <button
+                    className="hero-pause"
+                    onClick={() => setHeroManuallyPaused((value) => !value)}
+                    aria-pressed={heroManuallyPaused}
+                    aria-label={
+                      heroManuallyPaused
+                        ? "Reanudar rotación del carrusel"
+                        : "Pausar rotación del carrusel"
+                    }
+                  >
+                    {heroManuallyPaused ? <Play /> : <Pause />}
+                  </button>
+                </div>
+              </>
+            )}
+          </section>
+        )}
 
         <section id="categorias" className="content-section">
           <div className="section-title">
@@ -388,31 +433,28 @@ export default function Home() {
             </button>
           </div>
           <div className="category-grid">
-            {categoryCards.map((c) => {
-              const count = catalogProducts.filter(
-                (p) => p.category === c.name,
-              ).length;
-              return (
-                <button
-                  onClick={() => {
-                    setCategory(c.name);
-                    goToProducts();
-                  }}
-                  className="category-card"
-                  key={c.name}
-                  style={{ "--cat": c.color } as React.CSSProperties}
-                >
-                  <div>
-                    <span>{count} producto{count === 1 ? "" : "s"}</span>
-                    <h3>{c.name}</h3>
-                    <small>
-                      Ver categoría <ArrowRight size={15} />
-                    </small>
-                  </div>
-                  <img src={c.image} alt="" loading="lazy" decoding="async" />
-                </button>
-              );
-            })}
+            {categoryCards.map((c) => (
+              <button
+                onClick={() => {
+                  setCategory(c.name);
+                  goToProducts();
+                }}
+                className="category-card"
+                key={c.name}
+                style={{ "--cat": c.color } as React.CSSProperties}
+              >
+                <div>
+                  <span>
+                    {c.count} producto{c.count === 1 ? "" : "s"}
+                  </span>
+                  <h3>{c.name}</h3>
+                  <small>
+                    Ver categoría <ArrowRight size={15} />
+                  </small>
+                </div>
+                <img src={c.image} alt="" loading="lazy" decoding="async" />
+              </button>
+            ))}
           </div>
         </section>
 
@@ -627,34 +669,22 @@ export default function Home() {
           )}
         </section>
 
-        <section id="ayuda" className="service-grid">
-          <article>
-            <b>01</b>
-            <h3>¿Cuánta pintura necesito?</h3>
-            <p>
-              Calcula litros según superficie, rendimiento y número de manos.
-            </p>
-            <a href="#asesoria">
-              Calcular ahora <ArrowRight />
-            </a>
-          </article>
-          <article>
-            <b>02</b>
-            <h3>Prepara bien tu superficie</h3>
-            <p>Aprende a limpiar, sellar y reparar antes de pintar.</p>
-            <a href="#asesoria">
-              Ver guía <ArrowRight />
-            </a>
-          </article>
-          <article>
-            <b>03</b>
-            <h3>Habla con un experto</h3>
-            <p>Resolvemos dudas de producto, aplicación y compatibilidad.</p>
-            <a href="#contacto">
-              Solicitar asesoría <ArrowRight />
-            </a>
-          </article>
-        </section>
+        {/* Las preguntas se administran desde el CMS; si no hay ninguna
+            publicada, la sección no se muestra. */}
+        {faqs.length > 0 && (
+          <section id="ayuda" className="service-grid">
+            {faqs.map((faq, index) => (
+              <article key={faq.id}>
+                <b>{String(index + 1).padStart(2, "0")}</b>
+                <h3>{faq.question}</h3>
+                <p>{faq.answer}</p>
+                <a href="#asesoria">
+                  Encuentra tu producto <ArrowRight />
+                </a>
+              </article>
+            ))}
+          </section>
+        )}
 
         <footer id="contacto">
           <div>
@@ -690,9 +720,7 @@ export default function Home() {
             {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
             <a href="/terminos">Términos y condiciones</a>
           </div>
-          <small className="copyright">
-            © 2026 Berel México · Propuesta conceptual de rediseño
-          </small>
+          <small className="copyright">© 2026 Berel México</small>
         </footer>
       </main>
     </>

@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import StoreHeader from "@/components/StoreHeader";
+import StoreFooter from "@/components/StoreFooter";
 
 export const metadata = {
   title: "Aviso de privacidad | Berel México",
@@ -57,6 +58,7 @@ export default function PrivacyPage() {
           ← Volver a la tienda
         </a>
       </section>
+      <StoreFooter />
     </main>
   );
 }

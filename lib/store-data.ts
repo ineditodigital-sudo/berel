@@ -39,17 +39,10 @@ export function cmsProductToStore(row: CmsProductRow): Product {
   };
 }
 
-export const products: Product[] = [
-  {slug:"pintura-pisos-3800",name:"Pintura para Pisos Serie 3800",category:"Pinturas",image:"/berel/pisos.png",from:1385,to:6319,tag:"Alta resistencia",rating:4.9,description:"Acabado satinado base agua para proteger y decorar pisos de concreto y mortero.",benefits:["Interior y exterior","Acabado antideslizante","Sin plomo","Fácil aplicación"],uses:"Pisos con tránsito peatonal y vehicular ligero."},
-  {slug:"sellador-anti-salitre-530",name:"Sellador Anti-Salitre No. 530",category:"Selladores",image:"/berel/salitre.png",from:195,to:3165,tag:"Contra humedad",rating:4.8,description:"Sellador diseñado para superficies con presencia de sales y humedad alcalina.",benefits:["Bloquea el salitre","Mejora la adherencia","Secado rápido","Uso interior"],uses:"Muros de concreto, cemento, yeso y mampostería."},
-  {slug:"berelex-playa",name:"Berelex Pintura para Playa",category:"Pinturas",image:"/berel/playa.png",from:835,to:3559,tag:"Clima extremo",rating:4.9,description:"Recubrimiento de alto desempeño formulado para ambientes costeros exigentes.",benefits:["Resiste humedad","Protección UV","Lavable","Gran cobertura"],uses:"Fachadas y muros en zonas de alta humedad o cercanas al mar."},
-  {slug:"pintura-pizarron-4600",name:"Pintura para Pizarrón Serie 4600",category:"Pinturas",image:"/berel/pizarron.png",from:283.5,old:375,tag:"Oferta",rating:4.7,description:"Convierte superficies lisas en espacios prácticos para escribir con gis.",benefits:["Acabado uniforme","Fácil limpieza","Gran adherencia","Uso creativo"],uses:"Escuelas, oficinas, cocinas y habitaciones infantiles."},
-  {slug:"impermeabilizante-acrilico",name:"Impermeabilizante Acrílico Berel",category:"Impermeabilizantes",image:"/berel/imper.png",from:1299,to:2899,tag:"Protección total",rating:4.9,description:"Sistema impermeable flexible para proteger techos y azoteas de la lluvia.",benefits:["Alta elasticidad","Reflectivo","Fácil aplicación","Larga duración"],uses:"Losas de concreto, azoteas y cubiertas residenciales."},
-  {slug:"esmalte-summa",name:"Esmalte Summa Berel",category:"Esmaltes",image:"/berel/summa.png",from:399,to:1899,tag:"Máximo brillo",rating:4.8,description:"Esmalte de excelente nivelación y poder cubriente para múltiples superficies.",benefits:["Acabado brillante","Alta resistencia","Gran adherencia","Lavable"],uses:"Metal, madera y superficies previamente preparadas."},
-  {slug:"barniz-maderas",name:"Barniz Protector para Maderas",category:"Maderas",image:"/berel/summa.png",from:449,to:2099,tag:"Belleza natural",rating:4.7,description:"Protección transparente que realza la veta natural de la madera.",benefits:["Protección UV","Repelente al agua","Acabado durable","Resalta la veta"],uses:"Puertas, muebles, marcos y elementos decorativos."},
-  {slug:"kit-aplicacion",name:"Kit Profesional de Aplicación",category:"Accesorios",image:"/berel/pisos.png",from:289,tag:"Todo en uno",rating:4.8,description:"Herramientas esenciales para lograr una aplicación limpia y uniforme.",benefits:["Rodillo profesional","Brocha de precisión","Charola resistente","Reutilizable"],uses:"Proyectos residenciales de pintura y mantenimiento."}
-];
+// El catálogo, las categorías y las campañas viven en D1 y se administran desde
+// el CMS. No debe existir aquí ninguna lista de productos ni de categorías: un
+// catálogo de respaldo hace que la tienda siga mostrando datos viejos cuando la
+// base falla, en lugar de exponer el problema.
 
-export const menuPages = ["Pinturas","Impermeabilizantes","Selladores","Esmaltes","Maderas","Accesorios","Promociones"];
 export const slugify = (value:string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"");
 export const money = (n:number) => n.toLocaleString("es-MX",{style:"currency",currency:"MXN",minimumFractionDigits:2});

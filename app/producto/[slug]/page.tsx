@@ -13,7 +13,9 @@ import {
   Truck,
 } from "lucide-react";
 import StoreHeader from "@/components/StoreHeader";
-import { cmsProductToStore, money, products, slugify, type CmsProductRow } from "@/lib/store-data";
+import StoreFooter from "@/components/StoreFooter";
+import { money, slugify, type Product } from "@/lib/store-data";
+import { loadStorefront, reportStorefrontError } from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
 
 export default function ProductPage({
@@ -22,31 +24,80 @@ export default function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = use(params);
-  const [catalogProducts, setCatalogProducts] = useState(products);
+  const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const p = catalogProducts.find((item) => item.slug === slug);
   const { add, openCart, notify } = useCart();
   const [qty, setQty] = useState(1);
   const [size, setSize] = useState("4 L");
   const [whatsapp, setWhatsapp] = useState("");
+  const [minimumOrder, setMinimumOrder] = useState<number | null>(null);
 
+  // La ficha se arma únicamente con lo que publica el CMS: no se mezclan
+  // productos locales, así que un producto borrado deja de existir en la tienda.
   useEffect(() => {
-    fetch("/api/storefront")
-      .then((response) => response.json())
-      .then((data: { products?: CmsProductRow[]; settings?: { contact?: { whatsapp?: string } } }) => {
-        if (data.products?.length) setCatalogProducts(data.products.map(cmsProductToStore));
-        setWhatsapp(data.settings?.contact?.whatsapp?.replace(/\D/g, "") ?? "");
-      })
-      .catch(() => undefined);
+    let active = true;
+    loadStorefront().then(
+      (data) => {
+        if (!active) return;
+        setCatalogProducts(data.products);
+        setWhatsapp(data.settings.contact?.whatsapp?.replace(/\D/g, "") ?? "");
+        setMinimumOrder(data.settings.commerce?.minimumOrderCents ?? null);
+        setStatus("ready");
+      },
+      (error: unknown) => {
+        reportStorefrontError(error);
+        if (active) setStatus("error");
+      },
+    );
+    return () => {
+      active = false;
+    };
   }, []);
 
+  // Solo hay selector de presentación cuando el producto tiene un segundo
+  // precio real. Con un único precio, ofrecer dos opciones idénticas engaña.
   const presentations = useMemo(
-    () => [
-      { label: "4 L", price: p?.from ?? 0 },
-      { label: "19 L", price: p?.to ?? p?.from ?? 0 },
-    ],
+    () =>
+      p?.to && p.to !== p.from
+        ? [
+            { label: "4 L", price: p.from },
+            { label: "19 L", price: p.to },
+          ]
+        : [],
     [p],
   );
-  if (!p) return notFound();
+  if (!p) {
+    if (status === "loading") {
+      return (
+        <main id="main-content">
+          <StoreHeader />
+          <section className="catalog-hero">
+            <p>TIENDA BEREL</p>
+            <h1>Cargando producto…</h1>
+          </section>
+          <StoreFooter />
+        </main>
+      );
+    }
+    if (status === "error") {
+      return (
+        <main id="main-content">
+          <StoreHeader />
+          <section className="catalog-hero">
+            <p>TIENDA BEREL</p>
+            <h1>No pudimos cargar este producto</h1>
+            <span>
+              Estamos teniendo un problema para consultar el catálogo. Vuelve a
+              intentarlo en unos minutos.
+            </span>
+          </section>
+          <StoreFooter />
+        </main>
+      );
+    }
+    return notFound();
+  }
 
   const price =
     presentations.find((option) => option.label === size)?.price ?? p.from;
@@ -97,17 +148,19 @@ export default function ProductPage({
               </span>
             ))}
           </div>
-          <label>
-            Presentación
-            <select value={size} onChange={(e) => setSize(e.target.value)}>
-              {presentations.map((option) => (
-                <option key={option.label}>{option.label}</option>
-              ))}
-            </select>
-          </label>
+          {presentations.length > 0 && (
+            <label>
+              Presentación
+              <select value={size} onChange={(e) => setSize(e.target.value)}>
+                {presentations.map((option) => (
+                  <option key={option.label}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="detail-price">
             <div>
-              <small>Precio {size}</small>
+              <small>{presentations.length > 0 ? `Precio ${size}` : "Precio"}</small>
               <b>{money(price)}</b>
             </div>
             <div className="qty">
@@ -135,7 +188,7 @@ export default function ProductPage({
                   name: p.name,
                   image: p.image,
                   price,
-                  presentation: size,
+                  presentation: presentations.length > 0 ? size : "",
                 },
                 qty,
               );
@@ -160,7 +213,9 @@ export default function ProductPage({
           <div className="detail-trust">
             <span>
               <Truck />
-              Envío gratis · compra mínima $800
+              {minimumOrder
+                ? `Envío gratis · compra mínima ${money(minimumOrder / 100)}`
+                : "Envío gratis"}
             </span>
             <span>
               <ShieldCheck />
@@ -229,6 +284,7 @@ export default function ProductPage({
             ))}
         </div>
       </section>
+      <StoreFooter />
     </main>
   );
 }

@@ -30,6 +30,20 @@ import { cmsResources, type CmsField } from "@/lib/cms-resources";
 type Row = Record<string, string | number | boolean | null>;
 type Lookup = { id: string; name?: string; title?: string };
 
+declare global {
+  interface Window {
+    BEREL_PHP_CSRF?: string;
+  }
+}
+
+function cmsFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  const headers = new Headers(init.headers);
+  if (typeof window !== "undefined" && window.BEREL_PHP_CSRF) {
+    headers.set("X-CSRF-Token", window.BEREL_PHP_CSRF);
+  }
+  return fetch(input, { ...init, headers });
+}
+
 const navigation = [
   ["products", Package],
   ["categories", Boxes],
@@ -178,7 +192,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
     // Loading state is synchronized with the selected remote CMS resource.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBusy(true);
-    fetch(`/api/admin/${requestedResource}`, { signal: controller.signal })
+    cmsFetch(`/api/admin/${requestedResource}`, { signal: controller.signal })
       .then(async (response) => {
         const data = (await response.json()) as { items?: Row[]; error?: string };
         if (!response.ok) throw new Error(data.error);
@@ -199,8 +213,8 @@ export default function AdminDashboard({ userName }: { userName: string }) {
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/admin/categories").then((response) => response.json()),
-      fetch("/api/admin/pages").then((response) => response.json()),
+      cmsFetch("/api/admin/categories").then((response) => response.json()),
+      cmsFetch("/api/admin/pages").then((response) => response.json()),
     ])
       .then(([categoryData, pageData]) => {
         setCategories((categoryData as { items?: Lookup[] }).items ?? []);
@@ -223,7 +237,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
     const form = new FormData(event.currentTarget);
     const payload = Object.fromEntries(resource.fields.map((field) => [field.key, valueForSave(field, form)]));
     const id = editing?.id ?? editing?.key;
-    const response = await fetch(id ? `/api/admin/${active}/${id}` : `/api/admin/${active}`, {
+    const response = await cmsFetch(id ? `/api/admin/${active}/${id}` : `/api/admin/${active}`, {
       method: id ? "PATCH" : "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
@@ -239,7 +253,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
 
   async function saveSetting(key: string, value: Record<string, unknown>) {
     setBusy(true);
-    const response = await fetch(`/api/admin/settings/${key}`, {
+    const response = await cmsFetch(`/api/admin/settings/${key}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ value_json: JSON.stringify(value) }),
@@ -253,7 +267,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
   async function remove(row: Row) {
     if (!window.confirm(`¿Eliminar “${titleFor(row)}”? Esta acción no se puede deshacer.`)) return;
     setBusy(true);
-    const response = await fetch(`/api/admin/${active}/${row.id}`, { method: "DELETE" });
+    const response = await cmsFetch(`/api/admin/${active}/${row.id}`, { method: "DELETE" });
     setBusy(false);
     if (!response.ok) return setMessage("No se pudo eliminar.");
     setMessage("El elemento fue eliminado.");
@@ -264,7 +278,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
     setBusy(true);
     const form = new FormData();
     form.append("file", file);
-    const response = await fetch(endpoint, { method: "POST", body: form });
+    const response = await cmsFetch(endpoint, { method: "POST", body: form });
     const data = (await response.json()) as { error?: string; created?: number; updated?: number; name?: string };
     setBusy(false);
     if (!response.ok) return setMessage(data.error ?? "No se pudo subir el archivo.");
@@ -303,7 +317,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
         </nav>
         <div className="admin-user">
           <span>{userName.slice(0, 1).toUpperCase()}</span>
-          <div><b>{userName}</b><a href="/signout-with-chatgpt?return_to=/">Cerrar sesión</a></div>
+          <div><b>{userName}</b><a href="/admin?logout=1">Cerrar sesión</a></div>
         </div>
       </aside>
 

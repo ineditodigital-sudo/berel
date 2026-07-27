@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import StoreHeader from "@/components/StoreHeader";
+import StoreFooter from "@/components/StoreFooter";
 import { CircleUserRound, FileText, MapPin, Package } from "lucide-react";
 
 export const metadata = {
@@ -63,6 +64,7 @@ export default function AccountPage() {
           ← Volver a la tienda
         </a>
       </section>
+      <StoreFooter />
     </main>
   );
 }

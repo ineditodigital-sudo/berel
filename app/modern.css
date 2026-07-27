@@ -776,6 +776,37 @@ button,a,input,select{outline-offset:3px}
 .adv-submit:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
 .adv-note{margin-top:12px;font-size:13px;color:#bdbdbd}
 
+/* Header móvil compacto: conserva controles táctiles cómodos, con menor altura visual. */
+@media(max-width:700px){
+  :root{--mobile-header-height:56px}
+  html{scroll-padding-top:64px}
+  .store-header,.home-shell>.store-header{
+    position:fixed!important;
+    top:0!important;
+    right:0!important;
+    left:0!important;
+    z-index:999!important;
+  }
+  main:has(> .store-header):not(.home-shell){padding-top:56px}
+  .header-main{
+    height:56px!important;
+    min-height:56px!important;
+    padding:0 14px!important;
+    gap:2px!important;
+  }
+  .header-main .berel-logo img{width:88px;height:42px}
+  .mobile-button,.header-actions .round-action{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+  }
+  .mobile-button svg,.header-actions svg{width:19px;height:19px}
+  .header-actions .cart b{right:-1px;top:-3px;width:16px;height:16px;font-size:9px}
+  .main-nav.open{top:56px!important;height:calc(100dvh - 56px)!important}
+  .main-nav.open a{min-height:48px!important;font-size:15px!important}
+  .home-shell>.store-header .main-nav.open{top:56px!important;height:calc(100dvh - 56px)!important}
+}
+
 /* === Hero móvil: regla final autoritativa =========================
    El hero acumuló muchas reglas en distintos breakpoints y, según el
    dispositivo, el texto quedaba empujado a la derecha (mucho espacio a la

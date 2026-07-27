@@ -1,0 +1,43 @@
+DirectoryIndex index.html index.php
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  RewriteRule ^api/(.*)$ api.php?route=$1 [QSA,L]
+  RewriteRule ^admin/?$ admin.php [QSA,L]
+  RewriteRule ^admin/(.*)$ admin.php?route=$1 [QSA,L]
+
+  # Todas las páginas de catálogo son el mismo documento: la categoría se
+  # resuelve desde la URL en el navegador. Servir siempre el documento vigente
+  # logra dos cosas: una categoría nueva del CMS funciona sin volver a exportar,
+  # y las carpetas que dejaron exportaciones anteriores quedan inalcanzables en
+  # lugar de seguir mostrando su catálogo congelado.
+  # El lookahead evita el bucle: en la segunda pasada la ruta ya es el destino.
+  RewriteCond %{DOCUMENT_ROOT}/tienda/todos/index.html -f
+  RewriteRule ^tienda/(?!todos/index\.html$).+$ /tienda/todos/index.html [L]
+
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+</IfModule>
+
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  <FilesMatch "\.(css|js|woff2|webp|png|jpg|jpeg|svg)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+</IfModule>
+
+<FilesMatch "^(admin-app\.html|config\.php|config\.example\.php|schema\.sql)$">
+  Require all denied
+</FilesMatch>
