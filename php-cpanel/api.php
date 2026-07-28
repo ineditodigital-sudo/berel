@@ -220,10 +220,44 @@ function create_order(PDO $db, array $config, array $payload): never
         $db->prepare('UPDATE products SET stock=stock-? WHERE id=? AND stock>=?')->execute([$line['quantity'],$line['id'],$line['quantity']]);
     }
     $db->commit();
-    $summary=implode("\n",array_map(static fn($l)=>$l['quantity'].' × '.$l['name'],$lines));
-    $body="Pedido $orderNumber\n\n$summary\n\nTotal: ".money($subtotal)." MXN\n".($fulfillment==='pickup'?'Retiro en sucursal':'Entrega en Aguascalientes en máximo 24 horas después del pago.');
-    @mail((string)$email,"Recibimos tu pedido $orderNumber",$body,"From: {$config['mail']['from']}\r\nContent-Type: text/plain; charset=UTF-8");
-    @mail((string)$config['mail']['admin'],"Nueva venta $orderNumber","Cliente: $name · $email · $phone\n\n$body","From: {$config['mail']['from']}\r\nContent-Type: text/plain; charset=UTF-8");
+    // Avisos de venta. El destinatario y los interruptores viven en el CMS
+    // (Configuración → Avisos de venta); config.php solo es el respaldo.
+    $notif = setting($db, 'notifications', [
+        'adminEmail' => (string)($config['mail']['admin'] ?? ''),
+        'customerConfirmation' => true,
+        'adminNewOrder' => true,
+    ]);
+
+    $sucursal = null;
+    if ($fulfillment === 'pickup' && !empty($payload['branchId'])) {
+        $consulta = $db->prepare('SELECT name,address FROM branches WHERE id=?');
+        $consulta->execute([(string)$payload['branchId']]);
+        $sucursal = $consulta->fetch() ?: null;
+    }
+
+    $datosCorreo = [
+        'orderNumber' => $orderNumber,
+        'lines' => $lines,
+        'subtotal' => $subtotal,
+        'fulfillment' => $fulfillment,
+        'branch' => $sucursal,
+        'address' => $payload['address'] ?? [],
+        'promiseHours' => (int)($commerce['deliveryPromiseHours'] ?? 24),
+        'customerName' => $name,
+        'customerEmail' => $email,
+        'customerPhone' => $phone,
+        'notes' => trim((string)($payload['notes'] ?? '')),
+        'forAdmin' => false,
+    ];
+
+    if (!empty($notif['customerConfirmation'])) {
+        send_order_mail((string)$email, "Recibimos tu pedido $orderNumber", $datosCorreo, $config);
+    }
+    $correoAdmin = trim((string)($notif['adminEmail'] ?? ''));
+    if (!empty($notif['adminNewOrder']) && $correoAdmin !== '') {
+        $datosCorreo['forAdmin'] = true;
+        send_order_mail($correoAdmin, "Nueva venta $orderNumber", $datosCorreo, $config);
+    }
     $paymentUrl = $provider === 'mercadopago' ? create_mp_preference($config,$orderNumber,$email,$lines) : null;
     json_response(['orderNumber'=>$orderNumber,'paymentUrl'=>$paymentUrl,'confirmationUrl'=>'/pedido/confirmado?order='.urlencode($orderNumber)],201);
 }
