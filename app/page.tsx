@@ -31,6 +31,7 @@ import {
   type StorefrontSlide,
 } from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
+import PageBlocks, { usePageBlocks } from "@/components/blocks/PageBlocks";
 
 // Paleta de presentación de las tarjetas de categoría. Es estilo, no
 // contenido: los nombres, imágenes y campañas vienen del CMS.
@@ -42,10 +43,12 @@ const POPULAR_LIMIT = 8;
 
 export default function Home() {
   const { add, notify } = useCart();
+  // Las secciones de la home vienen de `content_blocks`; el orden y la
+  // visibilidad se administran desde el CMS.
+  const bloques = usePageBlocks("inicio");
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
   const [cmsCategories, setCmsCategories] = useState<StorefrontCategory[]>([]);
   const [heroSlides, setHeroSlides] = useState<StorefrontSlide[]>([]);
-  const [faqs, setFaqs] = useState<StorefrontFaq[]>([]);
   const [settings, setSettings] = useState<StorefrontSettings>({});
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
@@ -130,7 +133,6 @@ export default function Home() {
         setCatalogProducts(data.products);
         setCmsCategories(data.categories);
         setHeroSlides(data.slides);
-        setFaqs(data.faqs);
         setSettings(data.settings);
       },
       (error: unknown) => reportStorefrontError(error),
@@ -328,22 +330,9 @@ export default function Home() {
         </div>
         <StoreHeader />
 
-        <section className="trustbar">
-          <span>
-            <Truck /> Envío gratis{" "}
-            <small>
-              {minimumOrder
-                ? `en compras desde ${money(minimumOrder / 100)}`
-                : "en tu zona de entrega"}
-            </small>
-          </span>
-          <span>
-            <Headphones /> Asesoría en línea <small>para elegir mejor</small>
-          </span>
-          <span>
-            <ShieldCheck /> Compra 100% segura <small>pago protegido</small>
-          </span>
-        </section>
+        {/* Estas secciones ya se administran como bloques: se dibujan solo si
+            están activas en el CMS. */}
+        <PageBlocks blocks={bloques.filter((b) => b.type === "trustbar")} />
 
         {activeSlide && (
           <section
@@ -704,22 +693,11 @@ export default function Home() {
           )}
         </section>
 
-        {/* Las preguntas se administran desde el CMS; si no hay ninguna
-            publicada, la sección no se muestra. */}
-        {faqs.length > 0 && (
-          <section id="ayuda" className="service-grid">
-            {faqs.map((faq, index) => (
-              <article key={faq.id}>
-                <b>{String(index + 1).padStart(2, "0")}</b>
-                <h3>{faq.question}</h3>
-                <p>{faq.answer}</p>
-                <a href="#asesoria">
-                  Encuentra tu producto <ArrowRight />
-                </a>
-              </article>
-            ))}
-          </section>
-        )}
+        {/* Preguntas frecuentes y cualquier bloque de texto o banner que se
+            agregue desde el CMS, en el orden que tengan asignado. */}
+        <PageBlocks
+          blocks={bloques.filter((b) => b.type !== "trustbar")}
+        />
 
         <footer id="contacto">
           <div>
