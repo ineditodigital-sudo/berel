@@ -12,12 +12,12 @@ import {
   Check,
   Heart,
   Minus,
-  MessageCircle,
   Plus,
   ShieldCheck,
   ShoppingCart,
   Truck,
 } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import { money, slugify, type Product } from "@/lib/store-data";
@@ -228,7 +228,7 @@ export default function ProductPage({
               target="_blank"
               rel="noreferrer"
             >
-              <MessageCircle /> Solicitar información por WhatsApp
+              <WhatsAppIcon size={19} /> Solicitar información por WhatsApp
             </a>
           )}
           <div className="detail-trust">

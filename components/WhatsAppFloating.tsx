@@ -1,7 +1,7 @@
 "use client";
 
-import { MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import { loadStorefront, reportStorefrontError } from "@/lib/storefront-client";
 
 export default function WhatsAppFloating() {
@@ -32,7 +32,7 @@ export default function WhatsAppFloating() {
       rel="noreferrer"
       aria-label="Hablar con Berel por WhatsApp"
     >
-      <MessageCircle />
+      <WhatsAppIcon size={24} />
       <span>¿Te ayudamos?</span>
     </a>
   );

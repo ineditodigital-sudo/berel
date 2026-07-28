@@ -1069,3 +1069,9 @@ html,body{overflow-x:hidden;}
   .qty{height:46px}
   .qty button{min-width:44px;height:100%}
 }
+
+/* Botones de WhatsApp con la identidad del canal: el glifo oficial y el
+   verde de marca hacen que se reconozca de inmediato a dónde llevan. */
+.whatsapp-floating{background:#25d366!important;color:#fff!important}
+.whatsapp-floating svg{color:#fff}
+.detail-whatsapp svg{color:#25d366}
