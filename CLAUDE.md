@@ -64,6 +64,14 @@ La home deriva del CMS también el carrusel (`carousel_slides`), las tarjetas de
 
 En `StoreHeader` la barra principal muestra las primeras `NAV_CATEGORY_LIMIT` categorías por `sort_order`: el resto se alcanza desde "Todos los productos" y el filtro lateral del catálogo.
 
+### Páginas por bloques (en construcción)
+
+`lib/page-blocks.ts` es el registro de tipos de bloque (`hero`, `trustbar`, `categorias`, `asesor`, `productos`, `faq`, `texto`, `banner`): define qué campos pide el CMS y qué componente dibuja la tienda. Las filas viven en `content_blocks` y `/api/storefront` las publica ya unidas a su página (`page_slug`), ordenadas por `sort_order`. `drizzle/bloques-inicio.sql` siembra la home actual.
+
+Falta la segunda mitad: extraer las secciones de `app/page.tsx` a `components/blocks/` y renderizarlas desde esa lista. Hasta entonces la home sigue con las secciones fijas en el código y los bloques no se dibujan.
+
+`lib/storefront-context.tsx` comparte el payload entre todos los bloques; los componentes nuevos deben usar `useStorefront()` en lugar de repetir `loadStorefront()`.
+
 **Regla del despliegue estático:** ninguna página puede depender de `searchParams` o `params` en el servidor, porque el HTML exportado congela ese valor para todos los visitantes. `/tienda/[categoria]` y `/pedido/confirmado` leen la URL con `useSyncExternalStore` en el navegador. El `.htaccess` de `php-cpanel/` sirve el documento de catálogo para todo `/tienda/*`, así que una categoría nueva del CMS funciona sin volver a exportar.
 
 ### CMS genérico dirigido por registro

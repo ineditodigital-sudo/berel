@@ -5,6 +5,7 @@ import {
   type CmsProductRow,
   type Product,
 } from "@/lib/store-data";
+import type { PageBlock } from "@/lib/page-blocks";
 
 export type StorefrontCategory = {
   id: string;
@@ -53,6 +54,7 @@ export type Storefront = {
   slides: StorefrontSlide[];
   faqs: StorefrontFaq[];
   branches: StorefrontBranch[];
+  blocks: Array<PageBlock & { page_slug: string }>;
   settings: StorefrontSettings;
 };
 
@@ -62,6 +64,7 @@ type StorefrontPayload = {
   slides?: StorefrontSlide[];
   faqs?: StorefrontFaq[];
   branches?: StorefrontBranch[];
+  blocks?: Array<PageBlock & { page_slug: string }>;
   settings?: StorefrontSettings;
 };
 
@@ -71,6 +74,7 @@ export const emptyStorefront: Storefront = {
   slides: [],
   faqs: [],
   branches: [],
+  blocks: [],
   settings: {},
 };
 
@@ -97,6 +101,7 @@ export function loadStorefront(): Promise<Storefront> {
         slides: data.slides ?? [],
         faqs: data.faqs ?? [],
         branches: data.branches ?? [],
+        blocks: data.blocks ?? [],
         settings: data.settings ?? {},
       };
     })

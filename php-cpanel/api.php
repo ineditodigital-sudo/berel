@@ -13,11 +13,12 @@ try {
         $slides = $db->query("SELECT * FROM carousel_slides WHERE is_active=1 ORDER BY sort_order")->fetchAll();
         $branches = $db->query("SELECT * FROM branches WHERE is_active=1 ORDER BY name")->fetchAll();
         $faqs = $db->query("SELECT * FROM faqs WHERE is_active=1 ORDER BY sort_order")->fetchAll();
+        $blocks = $db->query("SELECT b.*,p.slug page_slug FROM content_blocks b JOIN pages p ON p.id=b.page_id WHERE b.is_active=1 ORDER BY p.slug,b.sort_order")->fetchAll();
         $settings = [];
         foreach ($db->query("SELECT `key`,value_json FROM site_settings")->fetchAll() as $row) {
             $settings[$row['key']] = json_decode((string)$row['value_json'], true) ?: [];
         }
-        json_response(compact('products', 'categories', 'slides', 'branches', 'faqs', 'settings'));
+        json_response(compact('products', 'categories', 'slides', 'branches', 'faqs', 'blocks', 'settings'));
     }
 
     if ($route === 'orders' && $method === 'POST') {
