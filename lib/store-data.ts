@@ -1,4 +1,4 @@
-export type Product = { slug:string; name:string; category:string; image:string; from:number; to?:number; old?:number; tag:string; rating:number; description:string; benefits:string[]; uses:string; technicalSheetUrl?:string; whatsappMessage?:string };
+export type Product = { slug:string; name:string; category:string; image:string; from:number; to?:number; old?:number; tag:string; rating:number; description:string; benefits:string[]; uses:string; technicalSheetUrl?:string; whatsappMessage?:string; featured:boolean };
 
 export type CmsProductRow = {
   slug: string;
@@ -13,6 +13,7 @@ export type CmsProductRow = {
   uses?: string;
   technical_sheet_url?: string;
   whatsapp_message?: string;
+  is_featured?: number | boolean;
 };
 
 export function cmsProductToStore(row: CmsProductRow): Product {
@@ -36,6 +37,8 @@ export function cmsProductToStore(row: CmsProductRow): Product {
     uses: row.uses || "",
     technicalSheetUrl: row.technical_sheet_url || "",
     whatsappMessage: row.whatsapp_message || "",
+    // "Destacado" en el CMS es lo que decide qué aparece en la home.
+    featured: Boolean(Number(row.is_featured ?? 0)),
   };
 }
 

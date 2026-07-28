@@ -847,3 +847,80 @@ button,a,input,select{outline-offset:3px}
     margin-left:0!important;
   }
 }
+
+/* ============================================================
+   Contención de texto largo
+   El catálogo real trae nombres de hasta 54 caracteres, palabras
+   sin cortes de 17 ("IMPERMEABILIZANTE") y descripciones de hasta
+   400. Con el catálogo corto anterior nada de esto se notaba.
+   ============================================================ */
+
+/* Las celdas de grid y flex no encogen por debajo de su contenido
+   salvo que se les permita: sin esto, una palabra larga ensancha la
+   tarjeta y arrastra a toda la página. */
+.product-card,
+.product-copy,
+.category-card,
+.category-card > div,
+.catalog-layout > div,
+.drawer-item,
+.drawer-item div,
+.service-grid article{
+  min-width:0;
+}
+
+/* Romper palabras solo cuando no hay más remedio. */
+.product-copy h3,
+.product-copy p,
+.product-copy > small,
+.category-card h3,
+.catalog-hero h1,
+.product-info h1,
+.breadcrumbs,
+.drawer-item div,
+.service-grid article h3,
+.service-grid article p,
+.adv-prod h3{
+  overflow-wrap:anywhere;
+  word-break:break-word;
+  hyphens:auto;
+}
+
+/* El nombre no debe empujar el precio fuera de la tarjeta: dos
+   líneas como máximo y el resto con puntos suspensivos. */
+.product-copy h3{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  line-clamp:2;
+  overflow:hidden;
+}
+
+/* Las descripciones importadas llegan a 400 caracteres. */
+.catalog-grid .product-copy p,
+.products-grid .product-copy p{
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+  line-clamp:3;
+  overflow:hidden;
+}
+
+/* Red de seguridad: ninguna página debe poder desplazarse en horizontal. */
+html,body{overflow-x:hidden;}
+
+/* Acceso al catálogo completo desde el escaparate de la home. */
+.ver-catalogo{
+  display:flex;
+  justify-content:center;
+  margin-top:30px;
+}
+.ver-catalogo .red-button{
+  display:inline-flex;
+  align-items:center;
+  gap:9px;
+}
+@media(max-width:700px){
+  .ver-catalogo{margin-top:22px;padding-right:var(--mobile-gutter)}
+  .ver-catalogo .red-button{width:100%;justify-content:center;min-height:52px}
+}

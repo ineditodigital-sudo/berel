@@ -21,7 +21,7 @@ import {
   X,
 } from "lucide-react";
 import StoreHeader from "@/components/StoreHeader";
-import { money, type Product } from "@/lib/store-data";
+import { money, slugify, type Product } from "@/lib/store-data";
 import {
   loadStorefront,
   reportStorefrontError,
@@ -36,6 +36,9 @@ import { useCart } from "@/lib/cart-context";
 // contenido: los nombres, imágenes y campañas vienen del CMS.
 const CATEGORY_COLORS = ["#e83338", "#178cc4", "#f3b51b", "#323f9c"];
 const CATEGORY_CARD_LIMIT = 4;
+// La home es un escaparate, no el catálogo: muestra una selección y manda al
+// catálogo completo. Se priorizan los productos marcados como "Destacado".
+const POPULAR_LIMIT = 8;
 
 export default function Home() {
   const { add, notify } = useCart();
@@ -89,7 +92,7 @@ export default function Home() {
   const carouselRef = useRef<HTMLDivElement>(null);
   const heroPaused = heroManuallyPaused || heroInteractionPaused;
 
-  const visible = useMemo(
+  const coincidencias = useMemo(
     () =>
       catalogProducts.filter(
         (p) =>
@@ -98,6 +101,24 @@ export default function Home() {
       ),
     [query, category, catalogProducts],
   );
+
+  // El carrusel muestra una selección: primero los destacados del CMS y, si no
+  // alcanzan, se completa con el resto en el orden que llega del catálogo.
+  const visible = useMemo(
+    () =>
+      [...coincidencias]
+        .sort((a, b) => Number(b.featured) - Number(a.featured))
+        .slice(0, POPULAR_LIMIT),
+    [coincidencias],
+  );
+
+  // El botón "ver todo" respeta lo que el visitante esté mirando.
+  const verTodoHref =
+    query.trim().length > 0
+      ? `/tienda/todos?q=${encodeURIComponent(query.trim())}`
+      : category !== "Todos"
+        ? `/tienda/${slugify(category)}`
+        : "/tienda/todos";
 
   // Catálogo, categorías y campañas salen del CMS. No hay contenido de respaldo:
   // si esto falla, la home se muestra vacía y el error queda en consola.
@@ -140,6 +161,9 @@ export default function Home() {
           "/berel-icono.png",
       }))
       .filter((item) => item.count > 0)
+      // "Populares" = las que más productos publicados tienen, no las primeras
+      // por orden alfabético.
+      .sort((a, b) => b.count - a.count)
       .slice(0, CATEGORY_CARD_LIMIT)
       .map((item, index) => ({
         ...item,
@@ -592,7 +616,8 @@ export default function Home() {
           {(query || category !== "Todos") && (
             <div className="query-note">
               {query ? `Resultados para “${query}”` : category} ·{" "}
-              {visible.length} producto{visible.length === 1 ? "" : "s"}{" "}
+              {coincidencias.length} producto
+              {coincidencias.length === 1 ? "" : "s"}{" "}
               <button
                 onClick={() => {
                   setQuery("");
@@ -665,6 +690,16 @@ export default function Home() {
               >
                 Ver todo
               </button>
+            </div>
+          )}
+          {coincidencias.length > 0 && (
+            <div className="ver-catalogo">
+              <a className="red-button" href={verTodoHref}>
+                {coincidencias.length > visible.length
+                  ? `Ver los ${coincidencias.length} productos`
+                  : "Ver todo el catálogo"}
+                <ArrowRight />
+              </a>
             </div>
           )}
         </section>

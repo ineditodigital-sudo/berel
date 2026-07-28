@@ -1,6 +1,12 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 "use client";
-import { use, useEffect, useMemo, useState } from "react";
+import {
+  use,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { notFound } from "next/navigation";
 import {
   Check,
@@ -18,12 +24,27 @@ import { money, slugify, type Product } from "@/lib/store-data";
 import { loadStorefront, reportStorefrontError } from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
 
+function subscribeToNavigation(onChange: () => void) {
+  window.addEventListener("popstate", onChange);
+  return () => window.removeEventListener("popstate", onChange);
+}
+
 export default function ProductPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = use(params);
+  const routeSlug = use(params).slug;
+  // El catálogo tiene más productos que rutas exportadas, así que el mismo
+  // documento sirve para cualquier ficha: el slug se lee de la URL real y no
+  // del valor que quedó congelado al exportar.
+  const pathname = useSyncExternalStore(
+    subscribeToNavigation,
+    () => window.location.pathname,
+    () => "",
+  );
+  const slugFromUrl = pathname.match(/\/producto\/([^/]+)/)?.[1];
+  const slug = slugFromUrl ? decodeURIComponent(slugFromUrl) : routeSlug;
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const p = catalogProducts.find((item) => item.slug === slug);

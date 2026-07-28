@@ -21,6 +21,11 @@ Options -Indexes
   RewriteCond %{DOCUMENT_ROOT}/tienda/todos/index.html -f
   RewriteRule ^tienda/(?!todos/index\.html$).+$ /tienda/todos/index.html [L]
 
+  # Lo mismo para las fichas: hay muchos más productos que rutas exportadas y
+  # la ficha resuelve el slug desde la URL, así que un documento sirve a todas.
+  RewriteCond %{DOCUMENT_ROOT}/producto/ficha/index.html -f
+  RewriteRule ^producto/(?!ficha/index\.html$).+$ /producto/ficha/index.html [L]
+
   RewriteCond %{REQUEST_FILENAME} -f [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^ - [L]

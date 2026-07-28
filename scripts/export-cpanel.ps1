@@ -23,34 +23,14 @@ New-Item -ItemType Directory -Path $outputPath | Out-Null
 
 Copy-Item -Path "E:\BEREL\SITIO WEB BEREL\dist\client\*" -Destination $outputPath -Recurse -Force
 
+# El catálogo y las fichas resuelven categoría y slug desde la URL en el
+# navegador, y el .htaccess sirve estos dos documentos para cualquier
+# /tienda/... y /producto/.... Por eso no hay que exportar una ruta por
+# categoría ni por producto: se agregan solos al publicarlos en el CMS.
 $routes = @(
   "/",
   "/tienda/todos",
-  "/tienda/sin-categorizar",
-  "/tienda/aerosoles",
-  "/tienda/barnices",
-  "/tienda/base-agua",
-  "/tienda/construccion",
-  "/tienda/corona",
-  "/tienda/decorativos",
-  "/tienda/epoxicos",
-  "/tienda/esmalte",
-  "/tienda/fandeli",
-  "/tienda/impermeabilizante",
-  "/tienda/industriales",
-  "/tienda/kover",
-  "/tienda/maderas",
-  "/tienda/otros-productos",
-  "/tienda/primarios",
-  "/tienda/sellador",
-  "/producto/pintura-pisos-3800",
-  "/producto/sellador-anti-salitre-530",
-  "/producto/berelex-playa",
-  "/producto/pintura-pizarron-4600",
-  "/producto/impermeabilizante-acrilico",
-  "/producto/esmalte-summa",
-  "/producto/barniz-maderas",
-  "/producto/kit-aplicacion",
+  "/producto/ficha",
   "/checkout",
   "/cuenta",
   "/nosotros",
