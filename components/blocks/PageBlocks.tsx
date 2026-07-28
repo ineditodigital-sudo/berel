@@ -7,31 +7,30 @@ import TrustbarBlock from "@/components/blocks/TrustbarBlock";
 import FaqBlock from "@/components/blocks/FaqBlock";
 import TextoBlock from "@/components/blocks/TextoBlock";
 import BannerBlock from "@/components/blocks/BannerBlock";
+import HeroBlock from "@/components/blocks/HeroBlock";
+import CategoriasBlock from "@/components/blocks/CategoriasBlock";
+import AsesorBlock from "@/components/blocks/AsesorBlock";
+import ProductosBlock from "@/components/blocks/ProductosBlock";
 
 /**
  * Dibuja las secciones de una página a partir de `content_blocks`.
  *
- * El orden, la visibilidad y el contenido salen de la base, así que reordenar
- * la página es cambiar `sort_order`, no tocar código. Los tipos que todavía
- * viven dentro de app/page.tsx (hero, categorías, asesor, productos) se
- * dibujan ahí mismo y aquí se declaran como "propios de la página" para no
- * duplicarlos mientras dura la migración.
+ * El orden, la visibilidad y el contenido salen de la base: reordenar la
+ * página es cambiar `sort_order`, no tocar código. Cada bloque se basta a sí
+ * mismo, así que agregar un tipo nuevo es sumar una entrada aquí y su
+ * componente en esta carpeta.
  */
 
 const COMPONENTES: Record<string, ComponentType<{ block: PageBlock }>> = {
+  hero: HeroBlock,
   trustbar: TrustbarBlock,
+  categorias: CategoriasBlock,
+  asesor: AsesorBlock,
+  productos: ProductosBlock,
   faq: FaqBlock,
   texto: TextoBlock,
   banner: BannerBlock,
 };
-
-/** Tipos que la página sigue dibujando por su cuenta. */
-export const TIPOS_EN_PAGINA = new Set([
-  "hero",
-  "categorias",
-  "asesor",
-  "productos",
-]);
 
 export function usePageBlocks(pageSlug: string): PageBlock[] {
   const { data } = useStorefront();

@@ -68,7 +68,7 @@ En `StoreHeader` la barra principal muestra las primeras `NAV_CATEGORY_LIMIT` ca
 
 `lib/page-blocks.ts` es el registro de tipos de bloque (`hero`, `trustbar`, `categorias`, `asesor`, `productos`, `faq`, `texto`, `banner`): define qué campos pide el CMS y qué componente dibuja la tienda. Las filas viven en `content_blocks` y `/api/storefront` las publica ya unidas a su página (`page_slug`), ordenadas por `sort_order`. `drizzle/bloques-inicio.sql` siembra la home actual.
 
-Falta la segunda mitad: extraer las secciones de `app/page.tsx` a `components/blocks/` y renderizarlas desde esa lista. Hasta entonces la home sigue con las secciones fijas en el código y los bloques no se dibujan.
+`components/blocks/` tiene un componente por tipo y `PageBlocks` los dibuja en `sort_order`. La home (`app/page.tsx`, 169 líneas) solo aporta el marco —splash, barra de utilidades, encabezado y pie—; todo lo demás son bloques. Cada uno se basta a sí mismo: lee lo que necesita de `useStorefront()` y maneja su propio estado, así que agregar un tipo es sumar el componente y su entrada en el mapa de `PageBlocks`.
 
 `lib/storefront-context.tsx` comparte el payload entre todos los bloques; los componentes nuevos deben usar `useStorefront()` en lugar de repetir `loadStorefront()`.
 
