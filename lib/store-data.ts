@@ -1,4 +1,4 @@
-export type Product = { slug:string; name:string; category:string; image:string; from:number; to?:number; old?:number; tag:string; rating:number; description:string; benefits:string[]; uses:string; technicalSheetUrl?:string; whatsappMessage?:string; featured:boolean };
+export type Product = { slug:string; name:string; category:string; image:string; from:number; to?:number; old?:number; tag:string; rating:number; description:string; details:string; benefits:string[]; uses:string; technicalSheetUrl?:string; whatsappMessage?:string; featured:boolean };
 
 export type CmsProductRow = {
   slug: string;
@@ -32,7 +32,11 @@ export function cmsProductToStore(row: CmsProductRow): Product {
     old: row.compare_at_cents ? Number(row.compare_at_cents) / 100 : undefined,
     tag: row.compare_at_cents ? "Oferta" : "Producto Berel",
     rating: 5,
+    // Resumen para las tarjetas y texto completo para la ficha: el
+    // catálogo importado trae descripciones de hasta 1800 caracteres que
+    // antes se perdían al quedarse solo con el resumen.
     description: row.short_description || row.description || "",
+    details: row.description || "",
     benefits,
     uses: row.uses || "",
     technicalSheetUrl: row.technical_sheet_url || "",

@@ -1075,3 +1075,72 @@ html,body{overflow-x:hidden;}
 .whatsapp-floating{background:#25d366!important;color:#fff!important}
 .whatsapp-floating svg{color:#fff}
 .detail-whatsapp svg{color:#25d366}
+
+/* --- Catálogo por tandas --- */
+.catalog-mas{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-top:28px;
+}
+.catalog-mas .red-button{min-width:260px;justify-content:center}
+.catalog-mas small{color:#777;font-size:12px}
+
+/* --- Descripción larga de la ficha --- */
+.detalle-largo p{
+  margin:0 0 10px;
+  color:#555;
+  line-height:1.7;
+  overflow-wrap:anywhere;
+}
+.detalle-largo p.punto{
+  padding-left:2px;
+  color:#333;
+  font-weight:600;
+}
+.detalle-largo p:last-child{margin-bottom:0}
+
+/* --- Barra de compra fija (solo móvil) --- */
+.barra-compra{display:none}
+@media(max-width:700px){
+  .barra-compra{
+    position:fixed;
+    z-index:70;
+    left:0;
+    right:0;
+    bottom:0;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    background:rgba(255,255,255,.97);
+    border-top:1px solid #e8e8e8;
+    box-shadow:0 -8px 24px rgba(17,17,17,.10);
+  }
+  .barra-compra>div{display:flex;flex-direction:column;min-width:0;flex:1}
+  .barra-compra small{
+    font-size:11px;
+    color:#777;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .barra-compra b{font-size:18px;color:#171717}
+  .barra-compra button{
+    flex:none;
+    min-height:48px;
+    padding:0 20px;
+    border:0;
+    border-radius:26px;
+    background:var(--red,#e2232e);
+    color:#fff;
+    font-weight:900;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .barra-compra button svg{width:18px}
+  /* Espacio para que la barra no tape el pie. */
+  main:has(.barra-compra) footer{padding-bottom:86px}
+}

@@ -18,6 +18,8 @@ import {
   type StorefrontCategory,
 } from "@/lib/storefront-client";
 
+const POR_TANDA = 24;
+
 function subscribeToNavigation(onChange: () => void) {
   window.addEventListener("popstate", onChange);
   return () => window.removeEventListener("popstate", onChange);
@@ -56,6 +58,9 @@ export default function CategoryPage({
     [],
   );
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  // Con 142 productos, pintarlos todos son decenas de pantallas de scroll.
+  // Se muestran por tandas y el visitante decide cuándo cargar más.
+  const [visibles, setVisibles] = useState(POR_TANDA);
 
   // Catálogo y categorías siempre en vivo desde el CMS: una edición se ve al
   // recargar, sin volver a exportar el sitio.
@@ -111,6 +116,17 @@ export default function CategoryPage({
     [products, category, q, sort],
   );
 
+  // Al cambiar de categoría, búsqueda u orden se vuelve a empezar la cuenta.
+  const claveDeLista = `${category}|${q}|${sort}`;
+  const [claveAnterior, setClaveAnterior] = useState(claveDeLista);
+  if (claveAnterior !== claveDeLista) {
+    setClaveAnterior(claveDeLista);
+    setVisibles(POR_TANDA);
+  }
+
+  const mostrados = list.slice(0, visibles);
+  const faltan = list.length - mostrados.length;
+
   return (
     <main id="main-content">
       <StoreHeader />
@@ -139,13 +155,15 @@ export default function CategoryPage({
           <div className="catalog-count">
             <span className="catalog-count-label">
               {status === "ready"
-                ? `${list.length} producto${list.length === 1 ? "" : "s"}`
+                ? faltan > 0
+                  ? `${mostrados.length} de ${list.length} productos`
+                  : `${list.length} producto${list.length === 1 ? "" : "s"}`
                 : "Cargando…"}
             </span>
             <CatalogSort value={sort} onChange={setSortOverride} />
           </div>
           <div className="catalog-grid">
-            {list.map((product) => (
+            {mostrados.map((product) => (
               <a
                 className="product-card"
                 href={`/producto/${product.slug}`}
@@ -172,6 +190,20 @@ export default function CategoryPage({
               </a>
             ))}
           </div>
+          {faltan > 0 && (
+            <div className="catalog-mas">
+              <button
+                type="button"
+                className="red-button"
+                onClick={() => setVisibles((n) => n + POR_TANDA)}
+              >
+                Ver {Math.min(faltan, POR_TANDA)} productos más
+              </button>
+              <small>
+                Mostrando {mostrados.length} de {list.length}
+              </small>
+            </div>
+          )}
           {!list.length && status === "loading" && (
             <div className="empty-results">
               <h2>Cargando catálogo…</h2>

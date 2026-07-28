@@ -245,16 +245,27 @@ export default function ProductPage({
           </div>
         </div>
       </section>
-      <section className="product-description">
-        <div>
-          <p>APLICACIÓN RECOMENDADA</p>
-          <h2>Resultados profesionales en cada proyecto</h2>
-        </div>
-        <p>
-          {p.uses} Consulta la ficha técnica y prepara correctamente la
-          superficie antes de aplicar para obtener el mejor rendimiento.
-        </p>
-      </section>
+      {(p.details || p.uses) && (
+        <section className="product-description">
+          <div>
+            <p>SOBRE ESTE PRODUCTO</p>
+            <h2>Resultados profesionales en cada proyecto</h2>
+          </div>
+          <div className="detalle-largo">
+            {/* La descripción del CMS llega con saltos de línea; cada uno es
+                un párrafo o un punto de la lista de beneficios. */}
+            {(p.details || p.uses)
+              .split("\n")
+              .map((linea) => linea.trim())
+              .filter(Boolean)
+              .map((linea, indice) => (
+                <p key={indice} className={linea.startsWith("•") ? "punto" : ""}>
+                  {linea}
+                </p>
+              ))}
+          </div>
+        </section>
+      )}
       <section className="product-specs">
         <div>
           <p>INFORMACIÓN TÉCNICA</p>
@@ -305,6 +316,32 @@ export default function ProductPage({
             ))}
         </div>
       </section>
+      {/* En móvil el botón de compra queda muy por debajo del pliegue, así que
+          se repite fijo al pie mientras se explora la ficha. */}
+      <div className="barra-compra">
+        <div>
+          <small>{p.name}</small>
+          <b>{money(price)}</b>
+        </div>
+        <button
+          onClick={() => {
+            add(
+              {
+                slug: p.slug,
+                name: p.name,
+                image: p.image,
+                price,
+                presentation: presentations.length > 0 ? size : "",
+              },
+              qty,
+            );
+            openCart();
+          }}
+        >
+          <ShoppingCart />
+          Añadir
+        </button>
+      </div>
       <StoreFooter />
     </main>
   );
