@@ -1050,3 +1050,22 @@ html,body{overflow-x:hidden;}
   .main-nav .searchbox-movil input{font-size:16px}
   .main-nav .searchbox-movil button{padding:0 18px;border-radius:24px}
 }
+
+/* ============================================================
+   Objetivos táctiles
+   Auditoría en móvil: el botón de agregar de las tarjetas medía
+   34×34 y los de cantidad 44×40. El mínimo recomendado es 44×44.
+   ============================================================ */
+@media(max-width:700px){
+  .products-section .product-bottom .add,
+  .products-section .product-bottom button,
+  .product-bottom button{
+    width:44px!important;
+    height:44px!important;
+  }
+  /* La retícula de la tarjeta se ajusta para que el botón más grande
+     no empuje el precio. */
+  .products-section .product-bottom{align-items:center!important}
+  .qty{height:46px}
+  .qty button{min-width:44px;height:100%}
+}
