@@ -111,9 +111,16 @@ export async function POST(request: Request) {
     return { ...product, quantity: item.quantity, totalCents: product.price_cents * item.quantity };
   });
   const subtotalCents = orderLines.reduce((sum, line) => sum + line.totalCents, 0);
-  if (subtotalCents < Number(commerce.minimumOrderCents ?? 80000)) {
+  // La compra mínima solo condiciona el envío a domicilio; el retiro en
+  // sucursal no tiene monto mínimo.
+  if (
+    payload.fulfillmentType === "delivery" &&
+    subtotalCents < Number(commerce.minimumOrderCents ?? 80000)
+  ) {
     return Response.json(
-      { error: `La compra mínima es de $${(Number(commerce.minimumOrderCents ?? 80000) / 100).toLocaleString("es-MX")} MXN.` },
+      {
+        error: `El envío a domicilio requiere una compra mínima de $${(Number(commerce.minimumOrderCents ?? 80000) / 100).toLocaleString("es-MX")} MXN. También puedes recoger en sucursal sin monto mínimo.`,
+      },
       { status: 400 },
     );
   }

@@ -81,7 +81,10 @@ export default function CheckoutPage() {
     window.location.href = data.paymentUrl || data.confirmationUrl || "/";
   }
 
+  // La compra mínima aplica solo al envío a domicilio. Por debajo de ese monto
+  // el pedido sigue siendo válido si el cliente lo recoge en sucursal.
   const minimum = Number(commerce.minimumOrderCents ?? 80000) / 100;
+  const faltaParaMinimo = fulfillment === "delivery" && total < minimum;
 
   return (
     <main className="checkout-shell">
@@ -103,8 +106,15 @@ export default function CheckoutPage() {
             )}
             <fieldset><legend>Notas del pedido</legend><label>Indicaciones opcionales<textarea name="notes" /></label></fieldset>
             {error && <div className="checkout-error">{error}</div>}
-            <button className="checkout-submit" disabled={busy || !items.length || total < minimum}>{busy ? "Creando pedido…" : "Continuar al pago"}</button>
-            {total < minimum && <p className="minimum-note">La compra mínima es de {money(minimum)}. Agrega {money(minimum - total)} para continuar.</p>}
+            <button className="checkout-submit" disabled={busy || !items.length || faltaParaMinimo}>{busy ? "Creando pedido…" : "Continuar al pago"}</button>
+            {faltaParaMinimo && (
+              <p className="minimum-note">
+                El envío a domicilio requiere una compra mínima de {money(minimum)}; te faltan {money(minimum - total)}.
+                <button type="button" className="minimum-switch" onClick={() => setFulfillment("pickup")}>
+                  O recoge en sucursal sin monto mínimo
+                </button>
+              </p>
+            )}
           </form>
         </section>
         <aside><h2>Resumen</h2>{items.map((item) => <article key={`${item.slug}-${item.presentation}`}><img src={item.image} alt="" /><div><b>{item.name}</b><small>{item.qty} × {money(item.price)}</small></div><strong>{money(item.qty * item.price)}</strong></article>)}<div className="checkout-totals"><span>Subtotal<b>{money(total)}</b></span><span>Envío<b>Gratis</b></span><span className="grand">Total<b>{money(total)}</b></span></div><p><ShieldCheck /> Tus datos y el pago se procesan de forma segura.</p></aside>

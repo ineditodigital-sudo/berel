@@ -205,7 +205,11 @@ function create_order(PDO $db, array $config, array $payload): never
         if (!$product || (int)$product['stock'] < $qty) json_response(['error'=>'Uno de los productos no tiene existencia suficiente.'], 409);
         $product['quantity']=$qty; $product['line_total']=(int)$product['price_cents']*$qty; $subtotal += $product['line_total']; $lines[]=$product;
     }
-    if ($subtotal < (int)$commerce['minimumOrderCents']) json_response(['error'=>'La compra mínima es de '.money((int)$commerce['minimumOrderCents']).' MXN.'], 422);
+    // La compra mínima solo condiciona el envío a domicilio; el retiro en
+    // sucursal no tiene monto mínimo.
+    if ($fulfillment === 'delivery' && $subtotal < (int)$commerce['minimumOrderCents']) {
+        json_response(['error'=>'El envío a domicilio requiere una compra mínima de '.money((int)$commerce['minimumOrderCents']).' MXN. También puedes recoger en sucursal sin monto mínimo.'], 422);
+    }
     $orderId=uid('order-'); $orderNumber='BER-'.date('ymd').'-'.strtoupper(substr(bin2hex(random_bytes(3)),0,6));
     $payments=setting($db,'payments',['enabled'=>false,'provider'=>'manual']);
     $provider=!empty($payments['enabled'])?(string)$payments['provider']:'manual';
