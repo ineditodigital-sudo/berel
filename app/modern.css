@@ -924,3 +924,129 @@ html,body{overflow-x:hidden;}
   .ver-catalogo{margin-top:22px;padding-right:var(--mobile-gutter)}
   .ver-catalogo .red-button{width:100%;justify-content:center;min-height:52px}
 }
+
+/* ============================================================
+   Encabezado tradicional de tienda
+   Fila 1: logo · buscador · carrito.  Fila 2: navegación.
+   El buscador ya tenía estilos y columna reservada en la
+   rejilla, pero el componente nunca lo dibujaba.
+   ============================================================ */
+
+/* Una regla anterior había reducido el encabezado a "sólo logo + carrito" con
+   !important, y por eso el buscador nunca se veía. Se recupera la tercera
+   columna: logo · buscador · carrito. */
+.store-header .header-main{
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+}
+.store-header .searchbox{
+  display:flex;
+  grid-column:auto;
+  grid-row:auto;
+  width:100%;
+  max-width:620px;
+  justify-self:center;
+  margin-top:0;
+}
+/* 16px evita que iOS haga zoom al enfocar el campo. */
+.store-header .searchbox input{font-size:16px}
+.store-header .searchbox button{white-space:nowrap;cursor:pointer}
+.store-header .searchbox input::-webkit-search-cancel-button{cursor:pointer}
+
+/* --- Desplegable de categorías --- */
+.nav-all-wrap{position:relative;display:flex;align-items:stretch}
+.main-nav .nav-all{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  cursor:pointer;
+  font:inherit;
+}
+.nav-all svg.girado{transform:rotate(180deg)}
+.nav-all svg{transition:transform var(--motion-fast,.2s)}
+
+.nav-dropdown{
+  position:absolute;
+  z-index:60;
+  top:calc(100% + 6px);
+  left:0;
+  min-width:min(560px,86vw);
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 18px 44px rgba(17,17,17,.18);
+  border:1px solid #eee;
+  padding:14px;
+}
+.nav-dropdown-todos{
+  display:block;
+  margin-bottom:10px;
+  padding:11px 12px;
+  border-radius:10px;
+  background:var(--red,#e2232e);
+  color:#fff!important;
+  text-align:center;
+}
+.nav-dropdown-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:2px;
+}
+.nav-dropdown-grid a{
+  display:block;
+  padding:11px 12px;
+  border-radius:9px;
+  color:#333;
+  font-weight:700;
+  text-transform:capitalize;
+  min-height:44px;
+  line-height:22px;
+}
+.nav-dropdown-grid a:hover,
+.nav-dropdown-grid a:focus-visible{background:#f4f4f4}
+
+@media(max-width:700px){
+  /* En móvil el buscador pasa a su propia fila, debajo del logo. */
+  .store-header .searchbox{
+    grid-column:1/-1;
+    grid-row:2;
+    margin-top:10px;
+    height:46px;
+  }
+  .store-header .header-main{
+    height:auto;
+    padding-top:12px;
+    padding-bottom:12px;
+    align-items:center;
+  }
+  .store-header .searchbox button{padding:0 16px}
+  /* El desplegable ocupa el ancho del menú, sin flotar. */
+  .nav-all-wrap{display:block}
+  .main-nav .nav-all{width:100%;justify-content:flex-start}
+  .nav-dropdown{
+    position:static;
+    min-width:0;
+    width:100%;
+    box-shadow:none;
+    border:0;
+    padding:10px 0 0;
+  }
+  .nav-dropdown-grid{grid-template-columns:1fr}
+}
+
+/* Buscador del menú móvil: sólo existe cuando el menú está desplegado.
+   El encabezado compacto de móvil no tiene espacio para él. */
+/* Especificidad suficiente para ganarle a `.store-header .searchbox`. */
+.store-header .searchbox-movil,
+.main-nav .searchbox-movil{display:none}
+@media(max-width:700px){
+  .main-nav .searchbox-movil{
+    display:flex!important;
+    width:100%;
+    height:48px;
+    margin-bottom:12px;
+    background:#f4f4f4;
+    border-radius:24px;
+    max-width:none;
+  }
+  .main-nav .searchbox-movil input{font-size:16px}
+  .main-nav .searchbox-movil button{padding:0 18px;border-radius:24px}
+}

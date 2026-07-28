@@ -1,8 +1,14 @@
 "use client";
 /* eslint-disable @next/next/no-html-link-for-pages */
 
-import { useEffect, useState } from "react";
-import { ChevronDown, Menu, ShoppingCart, X } from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from "react";
+import { ChevronDown, Menu, Search, ShoppingCart, X } from "lucide-react";
 import {
   loadStorefront,
   reportStorefrontError,
@@ -10,15 +16,29 @@ import {
 } from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
 
-// El CMS puede tener decenas de categorías activas; en la barra principal solo
-// caben las primeras por `sort_order`. El resto se alcanza desde "Todos los
-// productos" y desde el filtro lateral del catálogo.
-const NAV_CATEGORY_LIMIT = 8;
+// En la barra solo caben unas cuantas categorías; el resto vive en el
+// desplegable de "Todos los productos", que las lista todas.
+const NAV_CATEGORY_LIMIT = 6;
+
+function subscribeToNavigation(onChange: () => void) {
+  window.addEventListener("popstate", onChange);
+  return () => window.removeEventListener("popstate", onChange);
+}
 
 export default function StoreHeader() {
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [categories, setCategories] = useState<StorefrontCategory[]>([]);
   const { count: cartCount, openCart } = useCart();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Al llegar a los resultados, el buscador conserva lo que se buscó.
+  const search = useSyncExternalStore(
+    subscribeToNavigation,
+    () => window.location.search,
+    () => "",
+  );
+  const terminoActual = new URLSearchParams(search).get("q") ?? "";
 
   useEffect(() => {
     document.body.classList.toggle("mobile-menu-open", open);
@@ -30,7 +50,7 @@ export default function StoreHeader() {
     let active = true;
     loadStorefront().then(
       (data) => {
-        if (active) setCategories(data.categories.slice(0, NAV_CATEGORY_LIMIT));
+        if (active) setCategories(data.categories);
       },
       (error: unknown) => reportStorefrontError(error),
     );
@@ -38,6 +58,34 @@ export default function StoreHeader() {
       active = false;
     };
   }, []);
+
+  // El desplegable se cierra al tocar fuera o con Escape.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const alTocarFuera = (event: MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const alTeclear = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", alTocarFuera);
+    document.addEventListener("keydown", alTeclear);
+    return () => {
+      document.removeEventListener("pointerdown", alTocarFuera);
+      document.removeEventListener("keydown", alTeclear);
+    };
+  }, [menuOpen]);
+
+  function buscar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const termino = new FormData(event.currentTarget).get("q");
+    const texto = String(termino ?? "").trim();
+    window.location.href = texto
+      ? `/tienda/todos?q=${encodeURIComponent(texto)}`
+      : "/tienda/todos";
+  }
+
+  const destacadas = categories.slice(0, NAV_CATEGORY_LIMIT);
 
   return (
     <header className="store-header">
@@ -56,6 +104,19 @@ export default function StoreHeader() {
         <a className="berel-logo" href="/" aria-label="Berel México, inicio">
           <img src="/berel-icono.png" alt="Berel" />
         </a>
+        <form className="searchbox" role="search" onSubmit={buscar}>
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            name="q"
+            key={terminoActual}
+            defaultValue={terminoActual}
+            placeholder="Busca pinturas, impermeabilizantes…"
+            aria-label="Buscar productos"
+            autoComplete="off"
+          />
+          <button type="submit">Buscar</button>
+        </form>
         <div className="head-actions header-actions">
           <button
             className="cart round-action"
@@ -71,14 +132,56 @@ export default function StoreHeader() {
         className={open ? "main-nav open" : "main-nav"}
         aria-label="Navegación principal"
       >
-        <a
-          className="nav-all"
-          href="/tienda/todos"
-          onClick={() => setOpen(false)}
-        >
-          <Menu size={18} /> Todos los productos <ChevronDown size={15} />
-        </a>
-        {categories.map((category) => (
+        {/* El encabezado compacto de móvil no tiene sitio para el buscador,
+            así que aquí va el que se usa con el menú abierto. */}
+        <form className="searchbox searchbox-movil" role="search" onSubmit={buscar}>
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            name="q"
+            key={terminoActual}
+            defaultValue={terminoActual}
+            placeholder="Buscar productos…"
+            aria-label="Buscar productos"
+            autoComplete="off"
+          />
+          <button type="submit">Buscar</button>
+        </form>
+        <div className="nav-all-wrap" ref={menuRef}>
+          <button
+            type="button"
+            className="nav-all"
+            aria-expanded={menuOpen}
+            aria-haspopup="true"
+            aria-controls="menu-categorias"
+            onClick={() => setMenuOpen((value) => !value)}
+          >
+            <Menu size={18} /> Todos los productos{" "}
+            <ChevronDown size={15} className={menuOpen ? "girado" : ""} />
+          </button>
+          {menuOpen && (
+            <div className="nav-dropdown" id="menu-categorias">
+              <a className="nav-dropdown-todos" href="/tienda/todos">
+                Ver el catálogo completo
+              </a>
+              <div className="nav-dropdown-grid">
+                {categories.map((category) => (
+                  <a
+                    href={`/tienda/${category.slug}`}
+                    key={category.id ?? category.slug}
+                    onClick={() => {
+                      setMenuOpen(false);
+                      setOpen(false);
+                    }}
+                  >
+                    {category.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        {destacadas.map((category) => (
           <a
             href={`/tienda/${category.slug}`}
             key={category.id ?? category.slug}
