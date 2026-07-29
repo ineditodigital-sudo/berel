@@ -65,13 +65,20 @@ export default function HeroBlock({ block }: { block: PageBlock }) {
               </div>
             </div>
             <div className="hero-product">
-              <img
-                src={s.image_url}
-                alt={s.title}
-                fetchPriority={indice === 0 ? "high" : undefined}
-                loading={indice === 0 ? undefined : "lazy"}
-                decoding="async"
-              />
+              {/* Si la campaña trae versión vertical, el celular la usa; si
+                  no, cae en la de escritorio como hasta ahora. */}
+              <picture>
+                {s.image_url_mobile && (
+                  <source media="(max-width:700px)" srcSet={s.image_url_mobile} />
+                )}
+                <img
+                  src={s.image_url}
+                  alt={s.title}
+                  fetchPriority={indice === 0 ? "high" : undefined}
+                  loading={indice === 0 ? undefined : "lazy"}
+                  decoding="async"
+                />
+              </picture>
             </div>
           </article>
         ))}

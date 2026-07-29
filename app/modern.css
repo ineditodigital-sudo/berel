@@ -1273,3 +1273,6 @@ html,body{overflow-x:hidden;}
   .barra-edicion small{display:none}
   .bloque-acciones button{width:38px;height:38px}
 }
+
+/* La imagen del hero se comporta igual venga de <img> o de <picture>. */
+.hero-product picture{display:block;width:100%;height:100%}

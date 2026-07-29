@@ -410,6 +410,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
                 {regularFields.map((field) => (
                   <label className={field.type === "textarea" || field.type === "image" || ["description", "benefits_json", "gallery_json"].includes(field.key) ? "wide" : ""} key={field.key}>
                     <span>{field.label}{field.required && " *"}</span>
+                    {field.help && <small className="campo-ayuda">{field.help}</small>}
                     {field.key === "category_id" ? (
                       <select name={field.key} defaultValue={String(editing?.[field.key] ?? "")} required={field.required}><option value="">Selecciona una categoría</option>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>
                     ) : field.key === "page_id" ? (

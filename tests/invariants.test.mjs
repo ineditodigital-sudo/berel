@@ -4,23 +4,41 @@
  * contrato entre el CMS, el esquema de la base y el puerto PHP sí debe romperla.
  */
 import assert from "node:assert/strict";
-import { access, readFile } from "node:fs/promises";
+import { access, readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 
 const read = (relativePath) =>
   readFile(new URL(`../${relativePath}`, import.meta.url), "utf8");
 
-/** Devuelve un Map<tabla, Set<columna>> a partir del DDL de una migración. */
-function parseSqliteSchema(sql) {
+/**
+ * Devuelve un Map<tabla, Set<columna>> leyendo TODAS las migraciones en orden,
+ * incluidos los ALTER TABLE posteriores. Mirando solo la primera, un campo
+ * agregado después parecería inexistente.
+ */
+async function parseSqliteSchema() {
+  const carpeta = new URL("../drizzle/", import.meta.url);
+  const archivos = (await readdir(carpeta)).filter((f) => f.endsWith(".sql")).sort();
+
   const tables = new Map();
-  for (const match of sql.matchAll(/CREATE TABLE `([^`]+)` \(([\s\S]*?)\n\);/g)) {
-    const [, table, body] = match;
-    const columns = new Set();
-    for (const line of body.split("\n")) {
-      const column = line.trim().match(/^`([^`]+)`/);
-      if (column) columns.add(column[1]);
+  for (const archivo of archivos) {
+    const sql = await readFile(new URL(archivo, carpeta), "utf8");
+
+    for (const match of sql.matchAll(/CREATE TABLE `([^`]+)` \(([\s\S]*?)\n\);/g)) {
+      const [, table, body] = match;
+      const columns = new Set();
+      for (const line of body.split("\n")) {
+        const column = line.trim().match(/^`([^`]+)`/);
+        if (column) columns.add(column[1]);
+      }
+      tables.set(table, columns);
     }
-    tables.set(table, columns);
+
+    for (const match of sql.matchAll(
+      /ALTER TABLE\s+`?(\w+)`?\s+ADD COLUMN\s+`?(\w+)`?/gi,
+    )) {
+      const [, table, column] = match;
+      if (tables.has(table)) tables.get(table).add(column);
+    }
   }
   return tables;
 }
@@ -53,12 +71,8 @@ test("hosting.json declara los bindings que usa el código", async () => {
 });
 
 test("cada recurso del CMS existe en el esquema de la base", async () => {
-  const [resourcesSource, migration] = await Promise.all([
-    read("lib/cms-resources.ts"),
-    read("drizzle/0000_melodic_talos.sql"),
-  ]);
-  const resources = parseCmsResources(resourcesSource);
-  const schema = parseSqliteSchema(migration);
+  const resources = parseCmsResources(await read("lib/cms-resources.ts"));
+  const schema = await parseSqliteSchema();
 
   assert.ok(resources.size >= 10, "no se pudo leer el registro de recursos del CMS");
   for (const [name, { table, fields }] of resources) {

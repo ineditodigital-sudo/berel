@@ -21,6 +21,7 @@ export type StorefrontSlide = {
   title: string;
   body: string;
   image_url: string;
+  image_url_mobile: string;
   button_label: string;
   button_url: string;
   theme: string;

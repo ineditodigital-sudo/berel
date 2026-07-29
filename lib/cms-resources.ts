@@ -3,6 +3,8 @@ export type CmsField = {
   label: string;
   type?: "text" | "textarea" | "number" | "money" | "boolean" | "url" | "json" | "image";
   required?: boolean;
+  /** Explicación breve bajo la etiqueta, para no dar nada por supuesto. */
+  help?: string;
 };
 
 export type CmsResource = {
@@ -92,10 +94,20 @@ export const cmsResources: Record<string, CmsResource> = {
       { key: "eyebrow", label: "Antetítulo" },
       { key: "title", label: "Título", required: true },
       { key: "body", label: "Texto", type: "textarea" },
-      { key: "image_url", label: "Imagen", type: "image" },
+      {
+        key: "image_url",
+        label: "Imagen para escritorio",
+        type: "image",
+        help: "Horizontal, se ve en computadoras y tabletas.",
+      },
+      {
+        key: "image_url_mobile",
+        label: "Imagen para celular",
+        type: "image",
+        help: "Vertical. Si la dejas vacía se usa la de escritorio, que puede recortarse.",
+      },
       { key: "button_label", label: "Texto del botón" },
       { key: "button_url", label: "Enlace del botón", type: "url" },
-      { key: "theme", label: "Tema" },
       { key: "sort_order", label: "Orden", type: "number" },
       { key: "is_active", label: "Activo", type: "boolean" },
     ],

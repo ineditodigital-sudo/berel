@@ -69,6 +69,7 @@ export const carouselSlides = sqliteTable("carousel_slides", {
   title: text("title").notNull(),
   body: text("body").notNull().default(""),
   imageUrl: text("image_url").notNull().default(""),
+  imageUrlMobile: text("image_url_mobile").notNull().default(""),
   buttonLabel: text("button_label").notNull().default(""),
   buttonUrl: text("button_url").notNull().default(""),
   theme: text("theme").notNull().default("red"),

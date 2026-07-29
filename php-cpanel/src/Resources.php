@@ -26,7 +26,7 @@ final class Resources
         'slides' => [
             'table' => 'carousel_slides', 'label' => 'Carruseles', 'singular' => 'diapositiva',
             'order' => 'sort_order',
-            'fields' => ['name','eyebrow','title','body','image_url','button_label','button_url','theme','sort_order','is_active'],
+            'fields' => ['name','eyebrow','title','body','image_url','image_url_mobile','button_label','button_url','sort_order','is_active'],
         ],
         'faqs' => [
             'table' => 'faqs', 'label' => 'Preguntas frecuentes', 'singular' => 'pregunta',

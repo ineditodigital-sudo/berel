@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS content_blocks (
 CREATE TABLE IF NOT EXISTS carousel_slides (
   id varchar(64) PRIMARY KEY, name varchar(180) NOT NULL, eyebrow varchar(180) NOT NULL DEFAULT '',
   title varchar(255) NOT NULL, body text NOT NULL, image_url varchar(500) NOT NULL DEFAULT '',
+  image_url_mobile varchar(500) NOT NULL DEFAULT '',
   button_label varchar(120) NOT NULL DEFAULT '', button_url varchar(500) NOT NULL DEFAULT '',
   theme varchar(30) NOT NULL DEFAULT 'red', sort_order int NOT NULL DEFAULT 0, is_active tinyint(1) NOT NULL DEFAULT 1,
   created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
