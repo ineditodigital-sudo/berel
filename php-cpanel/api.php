@@ -33,6 +33,23 @@ try {
         json_response(['error' => 'Ruta no encontrada.'], 404);
     }
 
+    // Sonda de sesión para el modo edición de la tienda.
+    //
+    // Es la única ruta de admin que no exige el header CSRF, porque es la que
+    // lo entrega: sin ella no habría forma de obtenerlo desde el storefront
+    // estático. Solo responde a quien ya trae la cookie de sesión, y el
+    // navegador impide leer esta respuesta desde otro origen.
+    if (str_starts_with($route, 'admin/session') && $method === 'GET') {
+        if (!Auth::check()) {
+            json_response(['authenticated' => false]);
+        }
+        json_response([
+            'authenticated' => true,
+            'csrf' => Auth::csrf(),
+            'user' => (string)($_SESSION['admin']['username'] ?? $_SESSION['admin']['email'] ?? 'Admin'),
+        ]);
+    }
+
     Auth::requireApi();
     $parts = array_values(array_filter(explode('/', substr($route, 6)), 'strlen'));
 

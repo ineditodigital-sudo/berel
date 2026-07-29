@@ -3,6 +3,7 @@
 import type { ComponentType } from "react";
 import type { PageBlock } from "@/lib/page-blocks";
 import { useStorefront } from "@/lib/storefront-context";
+import BlockFrame from "@/components/blocks/BlockFrame";
 import TrustbarBlock from "@/components/blocks/TrustbarBlock";
 import FaqBlock from "@/components/blocks/FaqBlock";
 import TextoBlock from "@/components/blocks/TextoBlock";
@@ -44,12 +45,21 @@ export default function PageBlocks({
 }: {
   blocks: PageBlock[];
 }) {
+  const dibujables = blocks.filter((bloque) => COMPONENTES[bloque.type]);
   return (
     <>
-      {blocks.map((bloque) => {
+      {dibujables.map((bloque, indice) => {
         const Componente = COMPONENTES[bloque.type];
-        if (!Componente) return null;
-        return <Componente key={bloque.id} block={bloque} />;
+        return (
+          <BlockFrame
+            key={bloque.id}
+            block={bloque}
+            anterior={dibujables[indice - 1]}
+            siguiente={dibujables[indice + 1]}
+          >
+            <Componente block={bloque} />
+          </BlockFrame>
+        );
       })}
     </>
   );

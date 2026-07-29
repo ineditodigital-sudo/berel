@@ -3,6 +3,8 @@ import { Quicksand } from "next/font/google";
 import { headers } from "next/headers";
 import { CartProvider } from "@/lib/cart-context";
 import { StorefrontProvider } from "@/lib/storefront-context";
+import { EditModeProvider } from "@/lib/edit-mode";
+import { EditModeBar } from "@/components/blocks/BlockFrame";
 import WhatsAppFloating from "@/components/WhatsAppFloating";
 import "./globals.css";
 import "./modern.css";
@@ -61,10 +63,13 @@ export default function RootLayout({
         className={`${quicksand.variable} antialiased`}
       >
         <StorefrontProvider>
-          <CartProvider>
-            {children}
-            <WhatsAppFloating />
-          </CartProvider>
+          <EditModeProvider>
+            <CartProvider>
+              {children}
+              <WhatsAppFloating />
+              <EditModeBar />
+            </CartProvider>
+          </EditModeProvider>
         </StorefrontProvider>
       </body>
     </html>

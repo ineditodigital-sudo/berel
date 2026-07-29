@@ -70,6 +70,12 @@ En `StoreHeader` la barra principal muestra las primeras `NAV_CATEGORY_LIMIT` ca
 
 `components/blocks/` tiene un componente por tipo y `PageBlocks` los dibuja en `sort_order`. La home (`app/page.tsx`, 169 líneas) solo aporta el marco —splash, barra de utilidades, encabezado y pie—; todo lo demás son bloques. Cada uno se basta a sí mismo: lee lo que necesita de `useStorefront()` y maneja su propio estado, así que agregar un tipo es sumar el componente y su entrada en el mapa de `PageBlocks`.
 
+### Modo edición
+
+`lib/edit-mode.tsx` consulta `GET /api/admin/session` en cada carga. Si hay sesión válida aparece una barra flotante y, al activarla, cada bloque se envuelve en `BlockFrame`: mover arriba/abajo (intercambia `sort_order` con el vecino, dos PATCH), ocultar y editar sus textos, sin salir de la tienda.
+
+`/api/admin/session` es la **única** ruta de admin del puerto PHP que no exige el header CSRF, porque es la que lo entrega; sin ella el storefront estático no tendría forma de obtenerlo. Solo responde a quien ya trae la cookie de sesión.
+
 `lib/storefront-context.tsx` comparte el payload entre todos los bloques; los componentes nuevos deben usar `useStorefront()` en lugar de repetir `loadStorefront()`.
 
 **Regla del despliegue estático:** ninguna página puede depender de `searchParams` o `params` en el servidor, porque el HTML exportado congela ese valor para todos los visitantes. `/tienda/[categoria]` y `/pedido/confirmado` leen la URL con `useSyncExternalStore` en el navegador. El `.htaccess` de `php-cpanel/` sirve el documento de catálogo para todo `/tienda/*`, así que una categoría nueva del CMS funciona sin volver a exportar.
