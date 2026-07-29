@@ -59,6 +59,28 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es-MX">
+      <head>
+        {/*
+          Guarda el ancla de la URL y la quita ANTES de que cargue el bundle.
+
+          El restaurador de scroll de vinext, mientras haya hash en la URL,
+          vuelve a llamar a scrollIntoView en cada render: el visitante subía y
+          la página lo jalaba de regreso varias veces por segundo. No sirve
+          quitarlo desde React, porque para entonces vinext ya parcheó
+          history.replaceState y su re-sincronización repone el hash. Aquí el
+          parche todavía no existe, así que la limpieza se queda.
+
+          El destino guardado lo consume useAnclaDePagina cuando las secciones
+          del CMS ya están dibujadas.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{var h=location.hash;if(h&&/^#[\\w-]+$/.test(h)){window.__berelAncla=h;' +
+              'history.replaceState(history.state,"",location.pathname+location.search)}}catch(e){}',
+          }}
+        />
+      </head>
       <body
         className={`${quicksand.variable} antialiased`}
       >

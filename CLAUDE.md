@@ -80,6 +80,19 @@ En `StoreHeader` la barra principal muestra las primeras `NAV_CATEGORY_LIMIT` ca
 
 **Regla del despliegue estático:** ninguna página puede depender de `searchParams` o `params` en el servidor, porque el HTML exportado congela ese valor para todos los visitantes. `/tienda/[categoria]` y `/pedido/confirmado` leen la URL con `useSyncExternalStore` en el navegador. El `.htaccess` de `php-cpanel/` sirve el documento de catálogo para todo `/tienda/*`, así que una categoría nueva del CMS funciona sin volver a exportar.
 
+### Anclas: el hash nunca debe llegar a la URL
+
+Mientras `location.hash` tenga valor, **el restaurador de scroll de vinext vuelve a llamar a `scrollIntoView` sobre esa sección en cada render**. El visitante subía y la página lo devolvía al ancla varias veces por segundo: eso era `/#asesoria` "trabando" el scroll. Su respaldo se activa cuando `history.state` no trae la marca `__vinext_scrollY`, que es el caso normal en el sitio exportado.
+
+Por eso el hash se elimina y el desplazamiento se hace a mano, en dos piezas:
+
+- El script inline del `<head>` en `app/layout.tsx` guarda el ancla en `window.__berelAncla` y la borra de la URL. **Tiene que correr ahí**: para cuando React monta, vinext ya parcheó `history.replaceState` y su re-sincronización repone el hash.
+- `lib/ancla-de-pagina.ts` (`useAnclaDePagina`) consume ese destino cuando las secciones del CMS ya están dibujadas, e intercepta los clics en `a[href^="#"]` con `preventDefault()` para que el hash tampoco entre al navegar dentro de la página. Las páginas de servidor lo activan con `<AnclaDePagina />`.
+
+Dos cosas que **no** funcionan y ya se intentaron: limpiar el hash desde un `useEffect` (vinext lo repone) y escuchar `hashchange` para volver a limpiarlo (los dos manejadores se realimentan y el tirón se duplica — se midieron 28 llamadas de scroll en 2.5 s, alternando `{behavior:"smooth"}` propio con `{behavior:"auto"}` de vinext).
+
+Contrapartida aceptada: la barra de direcciones ya no muestra `#seccion`. `npm test` fija el contrato.
+
 ### CMS genérico dirigido por registro
 
 `lib/cms-resources.ts` es el **registro único** que define tablas, etiquetas, orden y campos. De ahí salen:

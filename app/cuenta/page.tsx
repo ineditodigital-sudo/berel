@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
+import AnclaDePagina from "@/components/AnclaDePagina";
 import { CircleUserRound, FileText, MapPin, Package } from "lucide-react";
 
 export const metadata = {
@@ -10,6 +11,9 @@ export const metadata = {
 export default function AccountPage() {
   return (
     <main id="main-content">
+      {/* /cuenta#facturacion es un ancla real, y sin esto el router insistiría
+          en volver a ella cada vez que el visitante se desplaza. */}
+      <AnclaDePagina />
       <StoreHeader />
       <section className="info-page">
         <div className="info-head">

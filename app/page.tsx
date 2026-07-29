@@ -8,6 +8,7 @@ import {
   type StorefrontSettings,
 } from "@/lib/storefront-client";
 import PageBlocks, { usePageBlocks } from "@/components/blocks/PageBlocks";
+import { useAnclaDePagina } from "@/lib/ancla-de-pagina";
 
 export default function Home() {
   // Todas las secciones vienen de `content_blocks`; la página solo aporta el
@@ -31,21 +32,17 @@ export default function Home() {
 
   const deliveryState = settings.commerce?.deliveryState;
 
+  // El navegador restaura por su cuenta la posición al cargar, y como las
+  // secciones llegan después del CMS, esa restauración pisa el salto al ancla.
   useEffect(() => {
-    // Evita que la página salte a una sección (p. ej. #asesoria) al cargar.
-    if (typeof window === "undefined") return;
     if ("scrollRestoration" in window.history) {
       window.history.scrollRestoration = "manual";
     }
-    if (window.location.hash) {
-      window.history.replaceState(
-        null,
-        "",
-        window.location.pathname + window.location.search,
-      );
-    }
-    window.scrollTo(0, 0);
   }, []);
+
+  // Las secciones llegan después de consultar el CMS, así que al cargar
+  // /#asesoria el ancla todavía no existe. Se espera a que haya bloques.
+  useAnclaDePagina(bloques.length > 0);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

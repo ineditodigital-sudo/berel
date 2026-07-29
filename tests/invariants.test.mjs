@@ -201,6 +201,51 @@ test("el bypass del CMS exige vista previa y desarrollo a la vez", async () => {
   );
 });
 
+test("el hash nunca llega a la URL, ni al cargar ni al pulsar", async () => {
+  const [layout, ancla, home] = await Promise.all([
+    read("app/layout.tsx"),
+    read("lib/ancla-de-pagina.ts"),
+    read("app/page.tsx"),
+  ]);
+
+  // 1. La carga directa se limpia desde el <head>, antes del bundle. Hacerlo
+  //    desde React no sirve: vinext parchea history.replaceState y lo repone.
+  assert.match(
+    layout,
+    /<head>[\s\S]*__berelAncla[\s\S]*history\.replaceState[\s\S]*<\/head>/,
+    "app/layout.tsx debe guardar y quitar el hash en un script del <head>, " +
+      "antes de que cargue el bundle y vinext parchee history",
+  );
+
+  // 2. Los clics internos se atienden sin dejar que el hash entre en la URL.
+  assert.match(
+    ancla,
+    /preventDefault\(\)/,
+    "los enlaces de ancla deben atenderse a mano para que el hash no entre en la URL",
+  );
+
+  // 3. Escuchar hashchange para volver a limpiar el hash realimentaba el fallo:
+  //    vinext reponía el hash, eso disparaba el manejador y el tirón se doblaba.
+  // Se busca el registro del listener, no la palabra: la documentación del
+  // archivo explica por qué no hay que escucharlo.
+  assert.doesNotMatch(
+    ancla,
+    /addEventListener\(\s*["'`]hashchange/,
+    "no se debe escuchar hashchange: se realimenta con la restauración de vinext",
+  );
+
+  assert.match(
+    home,
+    /useAnclaDePagina\(/,
+    "app/page.tsx debe usar el manejador compartido de anclas",
+  );
+  assert.doesNotMatch(
+    home,
+    /scrollTo\(0,\s*0\)/,
+    "app/page.tsx no debe forzar el scroll al tope: así se rompieron los enlaces a #asesoria",
+  );
+});
+
 test("el cliente consume las claves que publica /api/storefront", async () => {
   const [route, client] = await Promise.all([
     read("app/api/storefront/route.ts"),

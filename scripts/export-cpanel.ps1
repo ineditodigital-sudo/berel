@@ -47,11 +47,16 @@ document.addEventListener("click",function(event){
   var link=event.target.closest&&event.target.closest("a[href]");
   if(!link||link.target==="_blank"||link.hasAttribute("download"))return;
   var url=new URL(link.href,window.location.href);
-  if(url.origin===window.location.origin){
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    window.location.assign(url.href);
+  if(url.origin!==window.location.origin)return;
+  // Un ancla de la misma página (#asesoria) debe desplazarse, no recargar.
+  // Forzarla por location.assign volvía a cargar el sitio entero en cada
+  // clic y dejaba el scroll trabado.
+  if(url.hash&&url.pathname===window.location.pathname&&url.search===window.location.search){
+    return;
   }
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  window.location.assign(url.href);
 },true);
 </script>
 '@

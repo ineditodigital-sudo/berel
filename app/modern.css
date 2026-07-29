@@ -906,8 +906,12 @@ button,a,input,select{outline-offset:3px}
   overflow:hidden;
 }
 
-/* Red de seguridad: ninguna página debe poder desplazarse en horizontal. */
-html,body{overflow-x:hidden;}
+/* Nada de `overflow-x:hidden` en html ni body como red de seguridad: al
+   ponerlo en el elemento raíz, el viewport deja de ser el contenedor de
+   scroll y el desplazamiento suave del navegador deja de funcionar. Eso
+   rompía cada ancla del sitio (#asesoria, #productos, #ayuda) y cualquier
+   scrollIntoView. El desbordamiento se controla en su origen: `min-width:0`
+   en las celdas de grid y `overflow-wrap` en los textos largos. */
 
 /* Acceso al catálogo completo desde el escaparate de la home. */
 .ver-catalogo{
