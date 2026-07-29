@@ -1,7 +1,7 @@
 export type CmsField = {
   key: string;
   label: string;
-  type?: "text" | "textarea" | "number" | "money" | "boolean" | "url" | "json";
+  type?: "text" | "textarea" | "number" | "money" | "boolean" | "url" | "json" | "image";
   required?: boolean;
 };
 
@@ -29,7 +29,7 @@ export const cmsResources: Record<string, CmsResource> = {
       { key: "price_cents", label: "Precio (MXN)", type: "money", required: true },
       { key: "compare_at_cents", label: "Precio anterior (MXN)", type: "money" },
       { key: "stock", label: "Existencia", type: "number" },
-      { key: "image_url", label: "Imagen", type: "url" },
+      { key: "image_url", label: "Imagen", type: "image" },
       { key: "gallery_json", label: "Galería (JSON)", type: "json" },
       { key: "technical_sheet_url", label: "Ficha técnica", type: "url" },
       { key: "benefits_json", label: "Beneficios (JSON)", type: "json" },
@@ -48,7 +48,7 @@ export const cmsResources: Record<string, CmsResource> = {
       { key: "name", label: "Nombre", required: true },
       { key: "slug", label: "Slug", required: true },
       { key: "description", label: "Descripción", type: "textarea" },
-      { key: "image_url", label: "Imagen", type: "url" },
+      { key: "image_url", label: "Imagen", type: "image" },
       { key: "sort_order", label: "Orden", type: "number" },
       { key: "is_active", label: "Activa", type: "boolean" },
     ],
@@ -92,7 +92,7 @@ export const cmsResources: Record<string, CmsResource> = {
       { key: "eyebrow", label: "Antetítulo" },
       { key: "title", label: "Título", required: true },
       { key: "body", label: "Texto", type: "textarea" },
-      { key: "image_url", label: "Imagen", type: "url" },
+      { key: "image_url", label: "Imagen", type: "image" },
       { key: "button_label", label: "Texto del botón" },
       { key: "button_url", label: "Enlace del botón", type: "url" },
       { key: "theme", label: "Tema" },

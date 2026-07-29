@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { cmsResources, type CmsField } from "@/lib/cms-resources";
+import ImageField from "@/components/admin/ImageField";
 
 type Row = Record<string, string | number | boolean | null>;
 type Lookup = { id: string; name?: string; title?: string };
@@ -286,6 +287,19 @@ export default function AdminDashboard({ userName }: { userName: string }) {
     setRefresh((value) => value + 1);
   }
 
+  /** Sube una imagen y devuelve su ruta publica, sin recargar la lista. */
+  async function subirImagen(file: File): Promise<string | null> {
+    const form = new FormData();
+    form.append("file", file);
+    const response = await cmsFetch("/api/admin/media", { method: "POST", body: form });
+    const data = (await response.json()) as { url?: string; error?: string };
+    if (!response.ok || !data.url) {
+      setMessage(data.error ?? "No se pudo subir la imagen.");
+      return null;
+    }
+    return data.url;
+  }
+
   const formOpen = creating || Boolean(editing);
   const advancedFields = resource.fields.filter((field) => field.type === "json" && !["benefits_json", "gallery_json"].includes(field.key));
   const regularFields = resource.fields.filter((field) => !advancedFields.includes(field));
@@ -394,7 +408,7 @@ export default function AdminDashboard({ userName }: { userName: string }) {
             <form onSubmit={save}>
               <div className="form-section">
                 {regularFields.map((field) => (
-                  <label className={field.type === "textarea" || ["description", "benefits_json", "gallery_json"].includes(field.key) ? "wide" : ""} key={field.key}>
+                  <label className={field.type === "textarea" || field.type === "image" || ["description", "benefits_json", "gallery_json"].includes(field.key) ? "wide" : ""} key={field.key}>
                     <span>{field.label}{field.required && " *"}</span>
                     {field.key === "category_id" ? (
                       <select name={field.key} defaultValue={String(editing?.[field.key] ?? "")} required={field.required}><option value="">Selecciona una categoría</option>{categories.map((category) => <option value={category.id} key={category.id}>{category.name}</option>)}</select>
@@ -402,6 +416,12 @@ export default function AdminDashboard({ userName }: { userName: string }) {
                       <select name={field.key} defaultValue={String(editing?.[field.key] ?? "")} required={field.required}><option value="">Selecciona una página</option>{pages.map((page) => <option value={page.id} key={page.id}>{page.title}</option>)}</select>
                     ) : field.type === "textarea" || field.key === "benefits_json" || field.key === "gallery_json" ? (
                       <textarea name={field.key} defaultValue={String(displayInput(field, editing?.[field.key] ?? ""))} required={field.required} placeholder={field.key === "benefits_json" || field.key === "gallery_json" ? "Escribe un elemento por línea" : ""} />
+                    ) : field.type === "image" ? (
+                      <ImageField
+                        name={field.key}
+                        valorInicial={String(editing?.[field.key] ?? "")}
+                        subir={subirImagen}
+                      />
                     ) : field.type === "boolean" ? (
                       <label className="visual-toggle form-toggle"><input type="checkbox" name={field.key} defaultChecked={editing ? Boolean(editing[field.key]) : true} /><span /><div><b>{field.label}</b><small>Puedes cambiarlo más adelante</small></div></label>
                     ) : (

@@ -85,7 +85,10 @@ if ($SkipAdmin) {
   exit 0
 }
 
-Export-Route "/admin" (Join-Path $outputPath "admin-app.html")
+# /admin exige autenticacion en un build de produccion, asi que el cascaron
+# del CMS se toma de /admin-shell. En el hosting lo sirve admin.php tras
+# validar la sesion, y .htaccess bloquea el archivo en directo.
+Export-Route "/admin-shell" (Join-Path $outputPath "admin-app.html")
 
 $adminHtmlPath = Join-Path $outputPath "admin-app.html"
 $adminHtml = [System.IO.File]::ReadAllText($adminHtmlPath)
@@ -101,7 +104,7 @@ if (-not $adminCssSource) {
 }
 $adminHtml = $adminHtml.Replace(
   "/assets/$($adminCssSource.Name)",
-  "/assets/admin-restored-20260724-v2.css"
+  "/assets/admin-restored-$assetVersion.css"
 )
 [System.IO.File]::WriteAllText(
   $adminHtmlPath,
@@ -110,7 +113,7 @@ $adminHtml = $adminHtml.Replace(
 )
 Copy-Item `
   -LiteralPath $adminCssSource.FullName `
-  -Destination (Join-Path $outputPath "assets\admin-restored-20260724-v2.css") `
+  -Destination (Join-Path $outputPath "assets\admin-restored-$assetVersion.css") `
   -Force
 
 Write-Output "Exportación terminada: $outputPath"
