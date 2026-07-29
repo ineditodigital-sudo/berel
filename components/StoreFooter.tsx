@@ -22,7 +22,6 @@ export default function StoreFooter() {
       </div>
       <div>
         <h4>Ayuda</h4>
-        <a href="/#asesoria">Encuentra tu producto</a>
         <a href="/#ayuda">Preguntas frecuentes</a>
         <a href="/#contacto">Contacto</a>
       </div>

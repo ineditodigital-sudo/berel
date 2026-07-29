@@ -1,6 +1,5 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
 import { blockNumber, parseBlockConfig, type PageBlock } from "@/lib/page-blocks";
 import { useStorefront } from "@/lib/storefront-context";
 
@@ -18,9 +17,6 @@ export default function FaqBlock({ block }: { block: PageBlock }) {
           <b>{String(indice + 1).padStart(2, "0")}</b>
           <h3>{faq.question}</h3>
           <p>{faq.answer}</p>
-          <a href="#asesoria">
-            Encuentra tu producto <ArrowRight />
-          </a>
         </article>
       ))}
     </section>

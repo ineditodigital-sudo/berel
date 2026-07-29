@@ -197,9 +197,6 @@ export default function StoreHeader() {
         >
           Promociones
         </a>
-        <a href="/#asesoria" onClick={() => setOpen(false)}>
-          Encuentra tu producto
-        </a>
       </nav>
     </header>
   );

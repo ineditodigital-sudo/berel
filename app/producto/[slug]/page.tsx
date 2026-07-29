@@ -50,21 +50,32 @@ export default function ProductPage({
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   // La descripción larga no viaja en el listado (son ~1.5 KB por producto y
   // sólo se lee aquí), así que se pide sola para este slug.
-  const [detalleLargo, setDetalleLargo] = useState("");
+  //
+  // Se guarda junto al slug al que pertenece en vez de limpiarla al empezar el
+  // efecto: así, al cambiar de producto, basta comparar para descartar la
+  // anterior y no hace falta un setState en el cuerpo del efecto, que provoca
+  // renders en cascada.
+  const [detalle, setDetalle] = useState<{ slug: string; texto: string } | null>(
+    null,
+  );
+  const detalleLargo = detalle?.slug === slug ? detalle.texto : "";
   const encontrado = catalogProducts.find((item) => item.slug === slug);
-  const p = encontrado && detalleLargo
-    ? { ...encontrado, details: detalleLargo }
-    : encontrado;
+  const p = useMemo(
+    () =>
+      encontrado && detalleLargo
+        ? { ...encontrado, details: detalleLargo }
+        : encontrado,
+    [encontrado, detalleLargo],
+  );
 
   useEffect(() => {
     if (!slug) return;
     let vigente = true;
-    setDetalleLargo("");
     fetch(`/api/storefront?producto=${encodeURIComponent(slug)}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (vigente && data?.producto?.description) {
-          setDetalleLargo(String(data.producto.description));
+          setDetalle({ slug, texto: String(data.producto.description) });
         }
       })
       .catch(() => {
