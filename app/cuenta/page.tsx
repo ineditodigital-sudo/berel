@@ -6,6 +6,11 @@ import { CircleUserRound, FileText, MapPin, Package } from "lucide-react";
 
 export const metadata = {
   title: "Mi cuenta | Berel México",
+  description:
+    "Consulta tus pedidos, direcciones y datos de facturación de Berel México.",
+  alternates: { canonical: "/cuenta" },
+  // Área privada: no aporta nada a un buscador y depende de datos de sesión.
+  robots: { index: false, follow: true },
 };
 
 export default function AccountPage() {

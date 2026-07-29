@@ -10,6 +10,16 @@ $config = require dirname(__DIR__) . '/config.php';
 
 ini_set('display_errors', '0');
 ini_set('log_errors', '1');
+
+// Este Apache no trae mod_deflate, así que la respuesta de PHP se comprime
+// desde PHP. Importa sobre todo para /api/storefront: son 272 KB de catálogo
+// que la tienda pide en cada carga y que bajan a una fracción comprimidos.
+// Va antes de cualquier salida; si zlib no está, la línea simplemente no surte
+// efecto y todo sigue igual.
+if (!headers_sent() && extension_loaded('zlib')) {
+    ini_set('zlib.output_compression', '1');
+    ini_set('zlib.output_compression_level', '6');
+}
 date_default_timezone_set('America/Mexico_City');
 
 session_name((string)($config['security']['session_name'] ?? 'berel_admin'));

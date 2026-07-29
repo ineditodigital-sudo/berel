@@ -4,6 +4,9 @@ import StoreFooter from "@/components/StoreFooter";
 
 export const metadata = {
   title: "Términos y condiciones | Berel México",
+  description:
+    "Condiciones de compra, envío, retiro en sucursal, pagos y devoluciones de la tienda en línea de Berel México.",
+  alternates: { canonical: "/terminos" },
 };
 
 export default function TermsPage() {

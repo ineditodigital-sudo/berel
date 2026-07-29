@@ -225,9 +225,13 @@ function CartDrawer() {
         className={cartOpen ? "drawer-backdrop open" : "drawer-backdrop"}
         onClick={closeCart}
       />
+      {/* `aria-hidden` por sí solo dejaba el botón de cerrar accesible con el
+          tabulador aunque el cajón estuviera cerrado: quien navega con teclado
+          caía en controles invisibles. `inert` los saca del recorrido. */}
       <aside
         className={cartOpen ? "cart-drawer open" : "cart-drawer"}
         aria-hidden={!cartOpen}
+        inert={!cartOpen}
       >
         <div className="drawer-head">
           <div>

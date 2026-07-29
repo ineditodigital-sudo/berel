@@ -11,6 +11,7 @@ import {
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
 import CatalogSort from "@/components/CatalogSort";
+import { useSeoDinamico } from "@/lib/seo-dinamico";
 import { money, slugify, type Product } from "@/lib/store-data";
 import {
   loadStorefront,
@@ -96,6 +97,13 @@ export default function CategoryPage({
         ? "Promociones"
         : (categoryRecords.find((item) => item.slug === category)?.name ??
           category.replace(/-/g, " "));
+
+  // Todas las categorías comparten un documento exportado, así que el título y
+  // el canonical se ajustan aquí; si no, cada una heredaría los de la portada.
+  useSeoDinamico(
+    `${title} | Berel México`,
+    `${title} Berel: precios, existencia y entrega en Aguascalientes o retiro en sucursal.`,
+  );
 
   const list = useMemo(
     () =>

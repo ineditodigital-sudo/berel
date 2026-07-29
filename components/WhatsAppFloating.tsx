@@ -30,7 +30,10 @@ export default function WhatsAppFloating() {
       href={`https://wa.me/${number}?text=${message}`}
       target="_blank"
       rel="noreferrer"
-      aria-label="Hablar con Berel por WhatsApp"
+      // El nombre accesible tiene que empezar con el texto visible: quien usa
+      // control por voz dice lo que ve ("¿Te ayudamos?") y si la etiqueta no lo
+      // contiene, el comando no encuentra el botón.
+      aria-label="¿Te ayudamos? Escríbenos por WhatsApp"
     >
       <WhatsAppIcon size={24} />
       <span>¿Te ayudamos?</span>

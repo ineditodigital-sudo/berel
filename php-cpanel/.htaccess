@@ -12,6 +12,32 @@ Options -Indexes
   RewriteRule ^admin/?$ admin.php [QSA,L]
   RewriteRule ^admin/(.*)$ admin.php?route=$1 [QSA,L]
 
+  # El sitemap se arma desde la base para que un producto nuevo del CMS
+  # aparezca sin volver a exportar. Tiene que ir antes del catch-all, porque
+  # sitemap.xml no existe como archivo y si no acabaría sirviendo la tienda.
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+
+  # Si el navegador acepta gzip y existe el gemelo comprimido, se sirve ese.
+  # Va antes de las reglas del catálogo para que también alcance al index.html
+  # al que esas reglas redirigen en la segunda pasada.
+  # OJO: hoy esta regla NO se dispara, y no es un error de sintaxis.
+  #
+  # El sitio va detrás de un proxy nginx que habla HTTP/1.0 con Apache y en el
+  # camino descarta la cabecera Accept-Encoding: se comprobó con un PHP de
+  # diagnóstico que Apache la recibe ausente, mientras que una cabecera
+  # inventada sí pasaba. Por eso aquí no hay forma de saber si el navegador
+  # acepta gzip, y por eso tampoco sirvieron mod_deflate ni zlib en PHP.
+  #
+  # La compresión hay que habilitarla en nginx (panel del hosting o soporte).
+  # El día que ese proxy reenvíe la cabecera, esta regla empieza a funcionar
+  # sola: los gemelos .gz ya se publican en cada despliegue.
+  #
+  # No se sirve el .gz sin condición a propósito: quien no acepte gzip
+  # recibiría bytes ilegibles, y eso es peor que servir de más.
+  RewriteCond %{HTTP:Accept-Encoding} gzip
+  RewriteCond %{DOCUMENT_ROOT}/$1.gz -f
+  RewriteRule ^(.+\.(?:css|js|html))$ /$1.gz [L]
+
   # Todas las páginas de catálogo son el mismo documento: la categoría se
   # resuelve desde la URL en el navegador. Servir siempre el documento vigente
   # logra dos cosas: una categoría nueva del CMS funciona sin volver a exportar,
@@ -31,6 +57,29 @@ Options -Indexes
   RewriteRule ^ - [L]
 
   RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
+</IfModule>
+
+# Este Apache no trae mod_deflate: se comprobó con un .htaccess de prueba en un
+# directorio aparte y `AddOutputFilterByType DEFLATE` devolvió 500. Como sin
+# comprimir se van 606 KiB de más sólo en la portada, la compresión se resuelve
+# sirviendo gemelos .gz que genera scripts/export-cpanel.ps1 al exportar.
+# Las imágenes quedan fuera: webp, png y jpg ya vienen comprimidos.
+<IfModule mod_headers.c>
+  <FilesMatch "\.css\.gz$">
+    ForceType text/css
+    Header set Content-Encoding gzip
+    Header append Vary Accept-Encoding
+  </FilesMatch>
+  <FilesMatch "\.js\.gz$">
+    ForceType application/javascript
+    Header set Content-Encoding gzip
+    Header append Vary Accept-Encoding
+  </FilesMatch>
+  <FilesMatch "\.html\.gz$">
+    ForceType text/html
+    Header set Content-Encoding gzip
+    Header append Vary Accept-Encoding
+  </FilesMatch>
 </IfModule>
 
 <IfModule mod_headers.c>

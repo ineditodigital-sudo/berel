@@ -4,6 +4,9 @@ import StoreFooter from "@/components/StoreFooter";
 
 export const metadata = {
   title: "Aviso de privacidad | Berel México",
+  description:
+    "Cómo Berel México recaba, usa y protege los datos personales de quienes compran en la tienda en línea.",
+  alternates: { canonical: "/privacidad" },
 };
 
 export default function PrivacyPage() {

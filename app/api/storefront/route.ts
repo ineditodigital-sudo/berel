@@ -10,10 +10,34 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
-export async function GET() {
+// Columnas del listado. Se enumeran en lugar de usar p.* para dejar fuera
+// `description`: son ~1.5 KB por producto que sólo necesita la ficha, y con 140
+// productos inflaban esta respuesta de ~55 KB a 272 KB en cada carga de la
+// tienda. La ficha pide la suya con ?producto=<slug>.
+const COLUMNAS_LISTADO = `p.id, p.sku, p.slug, p.name, p.short_description,
+  p.price_cents, p.compare_at_cents, p.stock, p.image_url, p.gallery_json,
+  p.benefits_json, p.uses, p.technical_sheet_url, p.whatsapp_message,
+  p.category_id, p.is_active, p.is_featured`;
+
+export async function GET(request: Request) {
   const db = (env as unknown as RuntimeEnv).DB;
+
+  // Una sola ficha, con todos sus campos.
+  const slug = new URL(request.url).searchParams.get("producto");
+  if (slug) {
+    const producto = await db
+      .prepare(
+        `SELECT p.*, c.name AS category_name, c.slug AS category_slug
+         FROM products p LEFT JOIN categories c ON c.id=p.category_id
+         WHERE p.slug=? AND p.is_active=1`,
+      )
+      .bind(slug)
+      .first();
+    return Response.json({ producto: producto ?? null });
+  }
+
   const [products, categories, slides, branches, faqs, settings, blocks] = await db.batch([
-    db.prepare(`SELECT p.*, c.name AS category_name, c.slug AS category_slug
+    db.prepare(`SELECT ${COLUMNAS_LISTADO}, c.name AS category_name, c.slug AS category_slug
       FROM products p LEFT JOIN categories c ON c.id=p.category_id
       WHERE p.is_active=1 ORDER BY p.is_featured DESC,p.name ASC`),
     db.prepare("SELECT * FROM categories WHERE is_active=1 ORDER BY sort_order,name"),

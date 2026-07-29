@@ -25,13 +25,18 @@ export async function generateMetadata(): Promise<Metadata> {
     requestHeaders.get("x-forwarded-proto") ??
     (host.startsWith("localhost") ? "http" : "https");
   const metadataBase = new URL(`${protocol}://${host}`);
-  const socialImage = new URL("/og.png", metadataBase).toString();
+  // JPEG y no PNG: es una imagen fotográfica y en PNG pesaba 1.6 MB.
+  const socialImage = new URL("/og.jpg", metadataBase).toString();
 
   return {
     metadataBase,
     title: "Berel México | Pinturas, impermeabilizantes y recubrimientos",
     description:
       "Compra pinturas, impermeabilizantes, barnices y accesorios Berel con asesoría especializada.",
+    // Sin canonical, cada categoría y cada ficha se sirven desde el mismo
+    // documento exportado y un buscador puede tomarlas como duplicados. Cada
+    // página lo ajusta con su propia ruta; aquí queda el de la portada.
+    alternates: { canonical: "/" },
     openGraph: {
       title: "Berel México | Pinta con confianza",
       description:

@@ -150,6 +150,18 @@ Las credenciales FTP (`BEREL_FTP_HOST/USER/PASSWORD`, destino `/public_html/bere
 
 `HANDOFF-DEPLOY-BEREL.md` documenta el proceso de deploy y los pendientes abiertos.
 
+## Compresión: bloqueada por el proxy del hosting
+
+**Nada se sirve comprimido, y no es un descuido de configuración.** El sitio va detrás de un proxy nginx que habla HTTP/1.0 con Apache y **descarta la cabecera `Accept-Encoding`**. Se comprobó con un PHP de diagnóstico: Apache la recibe ausente, mientras que una cabecera inventada sí llegaba. Por eso fallan a la vez:
+
+- `mod_deflate` — además no está instalado: `AddOutputFilterByType DEFLATE` en un `.htaccess` de prueba devuelve 500.
+- `zlib.output_compression` en PHP — sin `Accept-Encoding` no comprime.
+- La regla de gemelos `.gz` del `.htaccess` — su `RewriteCond %{HTTP:Accept-Encoding} gzip` nunca se cumple.
+
+`scripts/export-cpanel.ps1` ya publica un `.gz` junto a cada `.css`, `.js` y `.html` (785 KB → 219 KB), y el `.htaccess` trae las reglas listas. **El día que se habilite gzip en nginx —panel del hosting o soporte— la compresión empieza a funcionar sola.** No se sirve el `.gz` sin condición a propósito: quien no acepte gzip recibiría bytes ilegibles.
+
+Es el techo del rendimiento móvil: con ~1 MB de texto sin comprimir, Lighthouse no pasa de ~64.
+
 ## Convenciones
 
 - Alias de import `@/*` → raíz del repo.

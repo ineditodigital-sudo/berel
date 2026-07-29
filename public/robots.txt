@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Sin contenido indexable: panel, proceso de compra y datos de sesion.
+Disallow: /admin
+Disallow: /api/
+Disallow: /checkout
+Disallow: /cuenta
+Disallow: /pedido/
+
+Sitemap: https://berel.inedito.digital/sitemap.xml

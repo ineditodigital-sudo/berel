@@ -4,6 +4,9 @@ import StoreFooter from "@/components/StoreFooter";
 
 export const metadata = {
   title: "Quiénes somos | Berel México",
+  description:
+    "Distribuidor Berel en Aguascalientes: pinturas, impermeabilizantes y recubrimientos con asesoría técnica y entrega local.",
+  alternates: { canonical: "/nosotros" },
 };
 
 export default function AboutPage() {

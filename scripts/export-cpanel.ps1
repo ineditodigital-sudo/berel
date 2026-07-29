@@ -63,11 +63,49 @@ document.addEventListener("click",function(event){
 
 $assetVersion = "20260727-cms-live"
 
+# El Apache del hosting no tiene mod_deflate (probado: da 500), así que nada se
+# comprimía y se iban 606 KiB de más sólo en la portada. Se deja junto a cada
+# .css/.js/.html un gemelo .gz y el .htaccess lo sirve cuando el navegador
+# acepta gzip. El original se conserva para quien no lo acepte.
+function Compress-TextAssets([string]$root) {
+  $total = 0
+  $comprimidos = 0
+  # La lista se materializa ANTES de escribir nada. Con la enumeración perezosa
+  # de Get-ChildItem, los .gz recién creados volvían a entrar en el recorrido y
+  # salían .gz.gz.gz sin fin. Y se filtra por extensión a mano porque -Include
+  # sobre una ruta sin comodín no filtra: colaba archivos como .assetsignore.
+  $archivos = @(
+    Get-ChildItem -LiteralPath $root -Recurse -File |
+      Where-Object { $_.Extension -in '.css', '.js', '.html' }
+  )
+  foreach ($archivo in $archivos) {
+      $origen = $archivo.FullName
+      $destino = "$origen.gz"
+      $entrada = [System.IO.File]::OpenRead($origen)
+      $salida = [System.IO.File]::Create($destino)
+      # Optimal y no SmallestSize: este script corre en Windows PowerShell 5.1,
+      # cuyo .NET Framework no conoce ese valor.
+      $gzip = New-Object System.IO.Compression.GZipStream -ArgumentList @(
+        $salida, [System.IO.Compression.CompressionLevel]::Optimal)
+      $entrada.CopyTo($gzip)
+      $gzip.Dispose(); $salida.Dispose(); $entrada.Dispose()
+      $total += $archivo.Length
+      $comprimidos += (Get-Item -LiteralPath $destino).Length
+  }
+  if ($total -gt 0) {
+    $ahorro = [math]::Round(100 - ($comprimidos / $total * 100))
+    Write-Output ("Comprimidos: {0:N0} KB -> {1:N0} KB ({2}% menos)" -f ($total / 1KB), ($comprimidos / 1KB), $ahorro)
+  }
+}
+
 function Export-Route([string]$route, [string]$destination) {
   $uri = "$BaseUrl$route"
   $html = (Invoke-WebRequest -UseBasicParsing -Uri $uri).Content
   $html = $html.Replace($BaseUrl, "https://berel.inedito.digital")
-  $html = $html.Replace('.css"', ".css?v=$assetVersion`"")
+  # Nada de ?v= sobre el CSS: el nombre ya trae hash de contenido, así que la
+  # invalidación de caché está resuelta. Agregar la consulta sólo al <link> del
+  # HTML hacía que el runtime pidiera el mismo archivo sin ella, y el navegador
+  # descargaba 109 KiB dos veces por tratarlas como URLs distintas.
   $html = $html.Replace("</head>", "$navigationGuard</head>")
   $parent = Split-Path -Parent $destination
   New-Item -ItemType Directory -Force -Path $parent | Out-Null
@@ -86,6 +124,7 @@ foreach ($route in $routes) {
 
 if ($SkipAdmin) {
   Write-Output "Se omitió /admin: se conserva el admin-app.html ya publicado."
+  Compress-TextAssets $outputPath
   Write-Output "Exportación terminada: $outputPath"
   exit 0
 }
@@ -120,5 +159,7 @@ Copy-Item `
   -LiteralPath $adminCssSource.FullName `
   -Destination (Join-Path $outputPath "assets\admin-restored-$assetVersion.css") `
   -Force
+
+Compress-TextAssets $outputPath
 
 Write-Output "Exportación terminada: $outputPath"

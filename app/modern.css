@@ -37,7 +37,7 @@ body{background:#efefef}.utility{display:none}main{max-width:1440px;margin:22px 
 
 /* Local visual foundation — shared across home, catalog and product */
 :root{
-  --brand-red:#e62b34;
+  --brand-red:#e02c32;
   --brand-red-dark:#bd1f27;
   --brand-blue:#10245f;
   --surface:#ffffff;
@@ -1280,3 +1280,31 @@ button,a,input,select{outline-offset:3px}
 
 /* La imagen del hero se comporta igual venga de <img> o de <picture>. */
 .hero-product picture{display:block;width:100%;height:100%}
+
+/* Los puntos del carrusel medían 8x8 px fuera del móvil: un blanco demasiado
+   pequeño para el dedo y para el ratón (Lighthouse lo marca como touch target
+   insuficiente). Se agranda el área que recibe el clic sin tocar el diseño: el
+   botón se vuelve transparente y el punto visible lo dibuja ::after. Es la
+   misma técnica que ya usaba la versión móvil. */
+@media(min-width:701px){
+  .hero-dots{gap:2px;align-items:center}
+  .hero-dots>button:not(.hero-pause){
+    position:relative;
+    width:26px;
+    height:26px;
+    background:transparent;
+  }
+  .hero-dots>button:not(.hero-pause)::after{
+    content:"";
+    position:absolute;
+    top:50%;
+    left:50%;
+    width:8px;
+    height:8px;
+    border-radius:10px;
+    background:#ffffff88;
+    transform:translate(-50%,-50%);
+    transition:width var(--motion-fast),background var(--motion-fast);
+  }
+  .hero-dots>button.active:not(.hero-pause)::after{width:24px;background:#fff}
+}

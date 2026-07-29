@@ -8,7 +8,19 @@ $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 
 try {
     if ($route === 'storefront' && $method === 'GET') {
-        $products = $db->query("SELECT p.*,c.name category_name,c.slug category_slug FROM products p LEFT JOIN categories c ON c.id=p.category_id WHERE p.is_active=1 ORDER BY p.is_featured DESC,p.name")->fetchAll();
+        // Una sola ficha, con todos sus campos.
+        if (isset($_GET['producto']) && $_GET['producto'] !== '') {
+            $stmt = $db->prepare("SELECT p.*,c.name category_name,c.slug category_slug FROM products p LEFT JOIN categories c ON c.id=p.category_id WHERE p.slug=? AND p.is_active=1");
+            $stmt->execute([(string)$_GET['producto']]);
+            json_response(['producto' => $stmt->fetch() ?: null]);
+        }
+
+        // Se enumeran las columnas en vez de usar p.* para dejar fuera
+        // `description`: son ~1.5 KB por producto que sólo necesita la ficha, y
+        // con 140 productos inflaban esta respuesta de ~55 KB a 272 KB en cada
+        // carga de la tienda.
+        $columnas = "p.id,p.sku,p.slug,p.name,p.short_description,p.price_cents,p.compare_at_cents,p.stock,p.image_url,p.gallery_json,p.benefits_json,p.uses,p.technical_sheet_url,p.whatsapp_message,p.category_id,p.is_active,p.is_featured";
+        $products = $db->query("SELECT $columnas,c.name category_name,c.slug category_slug FROM products p LEFT JOIN categories c ON c.id=p.category_id WHERE p.is_active=1 ORDER BY p.is_featured DESC,p.name")->fetchAll();
         $categories = $db->query("SELECT * FROM categories WHERE is_active=1 ORDER BY sort_order,name")->fetchAll();
         $slides = $db->query("SELECT * FROM carousel_slides WHERE is_active=1 ORDER BY sort_order")->fetchAll();
         $branches = $db->query("SELECT * FROM branches WHERE is_active=1 ORDER BY name")->fetchAll();

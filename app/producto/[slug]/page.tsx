@@ -20,6 +20,7 @@ import {
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import StoreHeader from "@/components/StoreHeader";
 import StoreFooter from "@/components/StoreFooter";
+import { useSeoDinamico } from "@/lib/seo-dinamico";
 import { money, slugify, type Product } from "@/lib/store-data";
 import { loadStorefront, reportStorefrontError } from "@/lib/storefront-client";
 import { useCart } from "@/lib/cart-context";
@@ -47,7 +48,40 @@ export default function ProductPage({
   const slug = slugFromUrl ? decodeURIComponent(slugFromUrl) : routeSlug;
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([]);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const p = catalogProducts.find((item) => item.slug === slug);
+  // La descripción larga no viaja en el listado (son ~1.5 KB por producto y
+  // sólo se lee aquí), así que se pide sola para este slug.
+  const [detalleLargo, setDetalleLargo] = useState("");
+  const encontrado = catalogProducts.find((item) => item.slug === slug);
+  const p = encontrado && detalleLargo
+    ? { ...encontrado, details: detalleLargo }
+    : encontrado;
+
+  useEffect(() => {
+    if (!slug) return;
+    let vigente = true;
+    setDetalleLargo("");
+    fetch(`/api/storefront?producto=${encodeURIComponent(slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (vigente && data?.producto?.description) {
+          setDetalleLargo(String(data.producto.description));
+        }
+      })
+      .catch(() => {
+        // Sin la descripción larga la ficha sigue siendo usable: muestra los
+        // usos y el resumen. No se interrumpe la compra por esto.
+      });
+    return () => {
+      vigente = false;
+    };
+  }, [slug]);
+
+  // Un solo documento sirve las 142 fichas, así que sin esto todas se
+  // presentarían con el título y la descripción de la portada.
+  useSeoDinamico(
+    p ? `${p.name} | Berel México` : null,
+    p ? (p.description || `${p.name} Berel. Compra en línea con entrega en Aguascalientes.`) : undefined,
+  );
   const { add, openCart, notify } = useCart();
   const [qty, setQty] = useState(1);
   const [size, setSize] = useState("4 L");
